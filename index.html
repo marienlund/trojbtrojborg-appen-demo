@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trøjborg-appen</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">T</div>
+      <div>
+        <h1>Trøjborg-appen</h1>
+        <p>Små lokale opgaver. Hurtige bud. Folk fra området.</p>
+      </div>
+    </div>
+    <div class="account" id="accountArea"></div>
+  </header>
+
+  <main>
+    <section class="intro" aria-label="Overblik">
+      <div class="intro-copy">
+        <span class="eyebrow">Trøjborgs lokale opgavemarked</span>
+        <h2>Få små opgaver klaret tæt på dig</h2>
+        <p>Opret en opgave med pris og tidspunkt. Lokale hjælpere kan byde ind, og du vælger selv hvem du vil gå videre med.</p>
+        <div class="intro-actions">
+          <button class="primary" id="heroTaskButton" type="button">+ Opret opgave</button>
+          <a class="text-link" href="#taskList">Se åbne opgaver</a>
+        </div>
+      </div>
+      <img src="assets/neighborhood.svg" alt="Illustration af et grønt Trøjborg-lignende nabolag med huse og cykler">
+    </section>
+
+    <section class="market-strip" aria-label="Sådan fungerer appen">
+      <div>
+        <strong>1. Beskriv opgaven</strong>
+        <span>Fortæl hvad, hvor og hvornår.</span>
+      </div>
+      <div>
+        <strong>2. Modtag bud</strong>
+        <span>Lokale hjælpere byder ind.</span>
+      </div>
+      <div>
+        <strong>3. Vælg hjælper</strong>
+        <span>Aftal detaljerne direkte.</span>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Filtrering">
+      <div class="search-wrap">
+        <span aria-hidden="true">⌕</span>
+        <input id="searchInput" type="search" placeholder="Søg efter opgave, område eller tekst">
+      </div>
+      <div class="filters" id="categoryFilters" aria-label="Kategorier"></div>
+      <button class="primary" id="openTaskButton" type="button">+ Opret opgave</button>
+    </section>
+
+    <section class="content-grid">
+      <aside class="panel">
+        <h2>Overblik</h2>
+        <div class="stats">
+          <div>
+            <strong id="openCount">0</strong>
+            <span>åbne opgaver</span>
+          </div>
+          <div>
+            <strong id="bidCount">0</strong>
+            <span>bud afgivet</span>
+          </div>
+        </div>
+        <h3>Tryghed i lille skala</h3>
+        <ul class="category-list">
+          <li>Profil kræves før opgaver og bud</li>
+          <li>Kontakt deles først når man går videre</li>
+          <li>Opgaver er lokale for Trøjborg</li>
+          <li>Gemmes kun i denne prototype-browser</li>
+        </ul>
+      </aside>
+
+      <section class="task-board" aria-live="polite">
+        <div class="board-head">
+          <h2>Åbne opgaver nær Trøjborg</h2>
+          <span id="resultText"></span>
+        </div>
+        <div class="tasks" id="taskList"></div>
+      </section>
+    </section>
+  </main>
+
+  <dialog id="authDialog">
+    <form method="dialog" class="dialog-form" id="authForm">
+      <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
+      <h2>Opret profil</h2>
+      <p>Profilen bruges til at oprette opgaver og sende bud. I prototypen gemmes den kun lokalt i browseren.</p>
+      <label for="nameInput">
+        Navn
+        <input id="nameInput" name="name" autocomplete="name" required>
+      </label>
+      <label for="emailInput">
+        Email
+        <input id="emailInput" name="email" type="email" autocomplete="email" required>
+      </label>
+      <label for="phoneInput">
+        Telefon
+        <input id="phoneInput" name="phone" type="tel" autocomplete="tel" required>
+      </label>
+      <button class="primary full" type="submit">Gem profil</button>
+    </form>
+  </dialog>
+
+  <dialog id="taskDialog">
+    <form method="dialog" class="dialog-form" id="taskForm">
+      <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
+      <h2>Opret opgave</h2>
+      <label for="taskTitle">
+        Titel
+        <input id="taskTitle" maxlength="80" required placeholder="Fx hjælp til hækklipning">
+      </label>
+      <label for="taskCategory">
+        Kategori
+        <select id="taskCategory" required></select>
+      </label>
+      <div class="two-col">
+        <label for="taskArea">
+          Område
+          <input id="taskArea" required placeholder="Fx Trøjborgvej">
+        </label>
+        <label for="taskBudget">
+          Budget
+          <input id="taskBudget" required placeholder="Fx 300 kr. eller efter aftale">
+        </label>
+      </div>
+      <label for="taskTime">
+        Hvornår
+        <input id="taskTime" required placeholder="Fx lørdag formiddag">
+      </label>
+      <label for="taskDescription">
+        Beskrivelse
+        <textarea id="taskDescription" rows="5" required placeholder="Hvad skal laves, og er der noget hjælperen skal vide?"></textarea>
+      </label>
+      <label for="taskContact">
+        Kontakt efter accept
+        <input id="taskContact" placeholder="Fx telefon, email eller aftales i appen">
+      </label>
+      <button class="primary full" type="submit">Læg opgave op</button>
+    </form>
+  </dialog>
+
+  <dialog id="bidDialog">
+    <form method="dialog" class="dialog-form" id="bidForm">
+      <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
+      <h2>Byd ind</h2>
+      <p id="bidTaskTitle"></p>
+      <label for="bidOffer">
+        Dit tilbud
+        <input id="bidOffer" required placeholder="Fx 250 kr. eller kan hjælpe gratis">
+      </label>
+      <label for="bidMessage">
+        Besked
+        <textarea id="bidMessage" rows="4" required placeholder="Fortæl kort hvornår og hvordan du kan hjælpe"></textarea>
+      </label>
+      <button class="primary full" type="submit">Send bud</button>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
