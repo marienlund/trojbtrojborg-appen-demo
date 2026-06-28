@@ -97,20 +97,24 @@
         <h2>Få besked om relevante opgaver</h2>
         <p>Vælg de typer opgaver du gerne vil høre om. I prototypen gemmes interessen i denne browser, og senere kan den kobles til rigtige mail-notifikationer.</p>
       </div>
-      <form class="interest-form" id="interestForm">
+      <form class="interest-form" id="interestForm" action="https://formsubmit.co/kontakt@trojborgappen.dk" method="POST">
+        <input type="hidden" name="_subject" value="Ny interessetilmelding - Trøjborg-appen">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_next" value="https://marienlund.github.io/trojbtrojborg-appen-demo/">
         <label for="interestEmail">
           Email
-          <input id="interestEmail" type="email" autocomplete="email" required placeholder="din@email.dk">
+          <input id="interestEmail" name="email" type="email" autocomplete="email" required placeholder="din@email.dk">
         </label>
         <fieldset>
           <legend>Jeg vil gerne høre om</legend>
           <div class="interest-options">
-            <label><input type="checkbox" name="interestCategory" value="Have og gård"> Have og gård</label>
-            <label><input type="checkbox" name="interestCategory" value="Indkøb"> Indkøb</label>
-            <label><input type="checkbox" name="interestCategory" value="Reparationer"> Reparationer</label>
-            <label><input type="checkbox" name="interestCategory" value="Dyr"> Dyr</label>
-            <label><input type="checkbox" name="interestCategory" value="Børn"> Børn</label>
-            <label><input type="checkbox" name="interestCategory" value="Andet"> Andet</label>
+            <label><input type="checkbox" name="Interesser" value="Have og gård"> Have og gård</label>
+            <label><input type="checkbox" name="Interesser" value="Indkøb"> Indkøb</label>
+            <label><input type="checkbox" name="Interesser" value="Reparationer"> Reparationer</label>
+            <label><input type="checkbox" name="Interesser" value="Dyr"> Dyr</label>
+            <label><input type="checkbox" name="Interesser" value="Børn"> Børn</label>
+            <label><input type="checkbox" name="Interesser" value="Andet"> Andet</label>
           </div>
         </fieldset>
         <button class="primary" type="submit">Gem interesse</button>
