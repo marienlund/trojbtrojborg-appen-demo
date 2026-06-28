@@ -27,19 +27,18 @@
 
   if (latestSignup) {
     emailInput.value = latestSignup.email || "";
-    form.querySelectorAll('input[name="interestCategory"]').forEach((checkbox) => {
+    form.querySelectorAll('input[name="Interesser"]').forEach((checkbox) => {
       checkbox.checked = (latestSignup.categories || []).includes(checkbox.value);
     });
     setStatus("Dine interesser er gemt i denne browser.", false);
   }
 
   form.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const categories = Array.from(form.querySelectorAll('input[name="interestCategory"]:checked'))
+    const categories = Array.from(form.querySelectorAll('input[name="Interesser"]:checked'))
       .map((checkbox) => checkbox.value);
 
     if (!categories.length) {
+      event.preventDefault();
       setStatus("Vælg mindst en interesse.", true);
       return;
     }
@@ -52,6 +51,6 @@
     };
 
     localStorage.setItem(storageKey, JSON.stringify([...signups, signup]));
-    setStatus("Tak - vi har gemt dine interesser i prototypen.", false);
+    setStatus("Sender tilmeldingen til kontakt@trojborgappen.dk...", false);
   });
 })();
