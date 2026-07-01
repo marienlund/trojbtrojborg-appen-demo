@@ -3,6 +3,7 @@
   const emailInput = document.querySelector("#interestEmail");
   const status = document.querySelector("#interestStatus");
   const storageKey = "trojborg-interest-signups";
+  const endpoint = window.TROJBORG_INTEREST_ENDPOINT || "";
 
   if (!form || !emailInput || !status) {
     return;
@@ -58,6 +59,23 @@
     status.append(intro, actions);
   }
 
+  async function sendToInterestList(signup) {
+    if (!endpoint) {
+      return false;
+    }
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(signup)
+    });
+
+    return response.type === "opaque" || response.ok;
+  }
+
   const savedSignups = readSignups();
   const latestSignup = savedSignups[savedSignups.length - 1];
 
@@ -69,7 +87,7 @@
     setStatus("Dine interesser er gemt i denne browser.", false);
   }
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const categories = Array.from(form.querySelectorAll('input[name="interestCategory"]:checked, input[name="Interesser"]:checked'))
@@ -103,6 +121,23 @@
     const body = encodeURIComponent(mailText);
     const mailtoUrl = `mailto:kontakt@trojborgappen.dk?subject=${subject}&body=${body}`;
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=kontakt@trojborgappen.dk&su=${subject}&body=${body}`;
+
+    if (endpoint) {
+      const submitButton = form.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      setStatus("Sender tilmeldingen...", false);
+
+      try {
+        await sendToInterestList(signup);
+        setStatus("Tak - din interesse er gemt. Vi giver besked, når der kommer noget relevant.", false);
+      } catch (error) {
+        showMailFallback(mailtoUrl, gmailUrl, mailText);
+      } finally {
+        submitButton.disabled = false;
+      }
+
+      return;
+    }
 
     showMailFallback(mailtoUrl, gmailUrl, mailText);
   });
