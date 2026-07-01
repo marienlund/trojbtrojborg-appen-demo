@@ -27,7 +27,7 @@
     status.classList.remove("is-error");
 
     const intro = document.createElement("span");
-    intro.textContent = "Tilmeldingen er gemt. Hvis mailen ikke åbner automatisk, vælg en af mulighederne her:";
+    intro.textContent = "Tilmeldingen er gemt. Vælg hvordan du vil sende den:";
 
     const actions = document.createElement("span");
     actions.className = "interest-status-actions";
@@ -104,7 +104,6 @@
     const mailtoUrl = `mailto:kontakt@trojborgappen.dk?subject=${subject}&body=${body}`;
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=kontakt@trojborgappen.dk&su=${subject}&body=${body}`;
 
-    window.location.href = mailtoUrl;
     showMailFallback(mailtoUrl, gmailUrl, mailText);
   });
 })();
