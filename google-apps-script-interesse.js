@@ -1,3 +1,4 @@
+const SPREADSHEET_ID = "1nEwBvy2XW5ZXrGuEX_sqNwGlREMMzSOCnLa83Lp-gbo";
 const SHEET_NAME = "Interesseliste";
 const NOTIFY_EMAIL = "kontakt@trojborgappen.dk";
 
@@ -28,7 +29,7 @@ function doPost(e) {
 }
 
 function getOrCreateSheet() {
-  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = spreadsheet.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
