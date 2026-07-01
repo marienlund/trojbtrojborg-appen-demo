@@ -1,6 +1,15 @@
-const SPREADSHEET_ID = "1nEwBvy2XW5ZXrGuEX_sqNwGlREMMzSOCnLa83Lp-gbo";
+const SPREADSHEET_ID = "1nEwBvy2xW5ZXrGuEX_sqNwGlREMMzSOCnLa83Lp-gbo";
 const SHEET_NAME = "Interesseliste";
 const NOTIFY_EMAIL = "kontakt@trojborgappen.dk";
+
+function doGet() {
+  const sheet = getOrCreateSheet();
+  sheet.appendRow([new Date().toISOString(), "TEST FRA LINK", "Direkte test"]);
+
+  return ContentService
+    .createTextOutput("Test ok - der er skrevet til Google Sheet")
+    .setMimeType(ContentService.MimeType.TEXT);
+}
 
 function doPost(e) {
   const sheet = getOrCreateSheet();
