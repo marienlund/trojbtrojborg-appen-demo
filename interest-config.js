@@ -1,0 +1,1 @@
+window.TROJBORG_INTEREST_ENDPOINT = "";
