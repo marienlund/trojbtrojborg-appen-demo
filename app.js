@@ -1,4 +1,4 @@
-const sharedEndpoint = https://script.google.com/macros/s/AKfycby3zChxkjGviltSYd9cRhOaFgeqJP4YpOcKRS1WOzj-9BVSJIZFqkqDGzUSiUiwHaZf/exec;
+const sharedEndpoint = "https://script.google.com/macros/s/AKfycbyAEQO-J6SKrFQre3LLcDLpgyyzIWcmgGj8wtuzhVWPfvP3axDZ67Ta-ILG7FdFfJA6/exec";
 
 const categories = [
   'Alle',
