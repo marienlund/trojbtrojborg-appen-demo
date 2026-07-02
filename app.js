@@ -197,6 +197,7 @@ function renderTasks() {
         </div>
         <div class="card-actions">
           <button class="primary bid-button" type="button" data-task-id="${task.id}">Byd ind</button>
+          <button class="danger delete-task-button" type="button" data-task-id="${task.id}">Slet</button>
         </div>
       </aside>
     </article>
@@ -211,6 +212,19 @@ function renderTasks() {
       state.activeBidTask = state.tasks.find(task => task.id === button.dataset.taskId);
       elements.bidTaskTitle.textContent = state.activeBidTask.title;
       elements.bidDialog.showModal();
+    });
+  });
+
+  elements.taskList.querySelectorAll('.delete-task-button').forEach(button => {
+    button.addEventListener('click', () => {
+      const task = state.tasks.find(item => item.id === button.dataset.taskId);
+      if (!task || !confirm(`Slet opgaven "${task.title}"?`)) {
+        return;
+      }
+
+      state.tasks = state.tasks.filter(item => item.id !== task.id);
+      write('trojborg-tasks', state.tasks);
+      render();
     });
   });
 }
