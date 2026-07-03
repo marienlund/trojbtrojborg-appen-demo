@@ -1,3 +1,5 @@
+const ADMIN_EMAIL = "jensenhp79@gmail.com";
+
 const sharedEndpoint = "https://script.google.com/macros/s/AKfycbx5iKzA0IXFrKRV7U7PRANYE9s-THrfhKglL8UmssWqd011exyODOf28fO3emDqXcSJ/exec";
 
 const categories = [
@@ -199,7 +201,7 @@ function renderTasks() {
         </div>
         <div class="card-actions">
           <button class="primary bid-button" type="button" data-task-id="${task.id}">Byd ind</button>
-          <button class="danger delete-task-button" type="button" data-task-id="${task.id}">Slet</button>
+          ${(state.user && (state.user.name === task.owner || state.user.email === ADMIN_EMAIL)) ? `<button class="danger delete-task-button" type="button" data-task-id="${task.id}">Slet</button>` : ''}
         </div>
       </aside>
     </article>
