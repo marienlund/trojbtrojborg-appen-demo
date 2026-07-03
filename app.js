@@ -4,7 +4,7 @@ const sharedEndpoint = "https://script.google.com/macros/s/AKfycbx5iKzA0IXFrKRV7
 
 const SUPABASE_URL = "https://sgrwqwhisjbwjyduarat.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OTE2k2Ch4Rczfg8V29gfMA_8mxmgvQr";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const categories = [
   'Alle',
@@ -62,7 +62,7 @@ function writeLocal(key, value) {
 // ─── Supabase data helpers ───
 
 async function loadTasks() {
-  const { data: tasks, error } = await supabase
+  const { data: tasks, error } = await sb
     .from('tasks')
     .select('*')
     .eq('is_deleted', false)
@@ -78,7 +78,7 @@ async function loadTasks() {
   let bidsMap = {};
 
   if (taskIds.length > 0) {
-    const { data: bids, error: bidsError } = await supabase
+    const { data: bids, error: bidsError } = await sb
       .from('bids')
       .select('*')
       .in('task_id', taskIds)
@@ -114,7 +114,7 @@ async function loadTasks() {
 }
 
 async function saveTask(task) {
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from('tasks')
     .insert({
       title: task.title,
@@ -154,7 +154,7 @@ async function saveTask(task) {
 }
 
 async function saveBid(taskId, bid) {
-  const { error } = await supabase
+  const { error } = await sb
     .from('bids')
     .insert({
       task_id: taskId,
@@ -172,7 +172,7 @@ async function saveBid(taskId, bid) {
 
 async function softDeleteTask(taskId) {
   const userEmail = state.user?.email || '';
-  const { data, error } = await supabase.rpc('soft_delete_task', {
+  const { data, error } = await sb.rpc('soft_delete_task', {
     p_task_id: taskId,
     p_user_email: userEmail
   });
@@ -494,3 +494,4 @@ elements.bidForm.addEventListener('submit', async event => {
   state.loading = false;
   render();
 })();
+
