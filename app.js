@@ -21,7 +21,9 @@ const state = {
   tasks: [],
   activeCategory: 'Alle',
   activeBidTask: null,
-  loading: true
+  loading: true,
+  // Realtime subscriptions
+  realtimeChannels: []
 };
 
 const elements = {
@@ -41,7 +43,8 @@ const elements = {
   bidDialog: document.querySelector('#bidDialog'),
   bidForm: document.querySelector('#bidForm'),
   bidTaskTitle: document.querySelector('#bidTaskTitle'),
-  heroTaskButton: document.querySelector('#heroTaskButton')
+  heroTaskButton: document.querySelector('#heroTaskButton'),
+  toastContainer: document.querySelector('#toastContainer')
 };
 
 // ─── localStorage helpers (user profile only) ───
@@ -57,6 +60,46 @@ function readLocal(key, fallback) {
 
 function writeLocal(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+// ─── Toast-notifikationer ───
+
+function showToast(type, title, body, actions = [], ttl = 8000) {
+  if (!elements.toastContainer) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <div class="toast-header">
+      <span class="toast-title">${escapeHtml(title)}</span>
+      <button class="toast-close" type="button" aria-label="Luk">&times;</button>
+    </div>
+    <div class="toast-body">${escapeHtml(body)}</div>
+    ${actions.length ? `<div class="toast-actions">${actions.map(a => `<button class="${a.primary ? 'primary' : ''}" data-action="${a.id}">${escapeHtml(a.label)}</button>`).join('')}</div>` : ''}
+  `;
+
+  elements.toastContainer.appendChild(toast);
+
+  const close = () => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 250);
+  };
+
+  toast.querySelector('.toast-close').addEventListener('click', close);
+
+  if (actions.length) {
+    toast.querySelectorAll('.toast-actions button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = actions.find(a => a.id === btn.dataset.action);
+        if (action) action.handler();
+        close();
+      });
+    });
+  }
+
+  if (ttl > 0) {
+    setTimeout(close, ttl);
+  }
 }
 
 // ─── Supabase data helpers ───
@@ -109,6 +152,7 @@ async function loadTasks() {
     ownerNote: 'Lokal bruger',
     contact: t.contact,
     createdAt: t.created_at,
+    awardedTo: t.awarded_to || null,
     bids: bidsMap[t.id] || []
   }));
 }
@@ -149,6 +193,7 @@ async function saveTask(task) {
     ownerNote: 'Ny lokal opgave',
     contact: data.contact,
     createdAt: data.created_at,
+    awardedTo: null,
     bids: []
   };
 }
@@ -182,6 +227,139 @@ async function softDeleteTask(taskId) {
     return false;
   }
   return data === true;
+}
+
+// ─── Award-funktion: tildel opgave til en byder ───
+
+async function awardTask(taskId, bidderName) {
+  if (!state.user) return false;
+
+  const { data, error } = await sb
+    .from('tasks')
+    .update({ awarded_to: bidderName })
+    .eq('id', taskId);
+
+  if (error) {
+    console.error('Fejl ved tildeling af opgave:', error);
+    alert('Kunne ikke tildele opgaven. Prøv igen.');
+    return false;
+  }
+
+  // Opdater local state
+  const task = state.tasks.find(t => t.id === taskId);
+  if (task) {
+    task.awardedTo = bidderName;
+  }
+
+  renderTasks();
+  return true;
+}
+
+// ─── Realtime: Lyt efter nye bud ───
+
+function setupRealtimeSubscriptions() {
+  // Ryd gamle subscriptions
+  state.realtimeChannels.forEach(ch => sb.removeChannel(ch));
+  state.realtimeChannels = [];
+
+  // 1) Lyt efter nye bud
+  const bidChannel = sb
+    .channel('bids-realtime')
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'bids' },
+      (payload) => handleNewBid(payload.new)
+    )
+    .subscribe();
+
+  state.realtimeChannels.push(bidChannel);
+
+  // 2) Lyt efter opgave-opdateringer (awarded_to ændringer)
+  const taskChannel = sb
+    .channel('tasks-realtime')
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'tasks' },
+      (payload) => handleTaskUpdate(payload.new)
+    )
+    .subscribe();
+
+  state.realtimeChannels.push(taskChannel);
+}
+
+function handleNewBid(newBid) {
+  // Find opgaven buddet er på
+  const task = state.tasks.find(t => t.id === newBid.task_id);
+  if (!task) return;
+
+  // Tilføj buddet til local state (hvis ikke allerede der)
+  const alreadyExists = task.bids.some(b => b.name === newBid.bidder_name && b.offer === newBid.offer);
+  if (!alreadyExists) {
+    task.bids.push({
+      name: newBid.bidder_name,
+      offer: newBid.offer,
+      message: newBid.message
+    });
+    renderTasks();
+  }
+
+  // Hvis den indloggede bruger er opgave-ejeren → vis notifikation
+  if (state.user && state.user.email === task.ownerEmail) {
+    const taskTitle = task.title.length > 40 ? task.title.slice(0, 40) + '…' : task.title;
+    showToast(
+      'info',
+      '💡 Nyt bud på din opgave!',
+      `${newBid.bidder_name} bød "${newBid.offer}" på "${taskTitle}"`,
+      [
+        { id: 'view', label: 'Se opgave', primary: true, handler: () => scrollToTask(task.id) },
+        { id: 'dismiss', label: 'Luk', handler: () => {} }
+      ],
+      12000
+    );
+  }
+}
+
+function handleTaskUpdate(updatedTask) {
+  // Opdater local state
+  const task = state.tasks.find(t => t.id === updatedTask.id);
+  if (!task) return;
+
+  const wasAwarded = task.awardedTo;
+  const nowAwarded = updatedTask.awarded_to;
+  task.awardedTo = nowAwarded || null;
+
+  renderTasks();
+
+  // Hvis opgaven blev tildelt nogen
+  if (nowAwarded && nowAwarded !== wasAwarded) {
+    // Hvis den indloggede bruger er den der fik opgaven → vis notifikation
+    if (state.user && state.user.name === nowAwarded) {
+      showToast(
+        'success',
+        '🎉 Tillykke! Du har fået opgaven!',
+        `"${task.title}" — kontakt opgave-ejer for at aftale detaljerne.`,
+        [
+          { id: 'view', label: 'Se opgave', primary: true, handler: () => scrollToTask(task.id) },
+          { id: 'dismiss', label: 'Luk', handler: () => {} }
+        ],
+        15000
+      );
+    }
+  }
+}
+
+function scrollToTask(taskId) {
+  const cards = document.querySelectorAll('.task-card');
+  // Find kortet med data-task-id
+  for (const card of cards) {
+    const btn = card.querySelector('[data-task-id]');
+    if (btn && btn.dataset.taskId === taskId) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.style.boxShadow = '0 0 0 3px var(--green), 0 8px 24px rgba(30,49,58,.12)';
+      setTimeout(() => {
+        card.style.boxShadow = '';
+      }, 3000);
+      break;
+    }
+  }
 }
 
 // ─── UI helpers ───
@@ -247,6 +425,13 @@ function canDelete(task) {
   return state.user.email === task.ownerEmail || state.user.email === ADMIN_EMAIL;
 }
 
+function canAward(task) {
+  // Kan kun tildele hvis man er ejer, og opgaven ikke allerede er tildelt
+  if (!state.user) return false;
+  if (task.awardedTo) return false;
+  return state.user.email === task.ownerEmail || state.user.email === ADMIN_EMAIL;
+}
+
 function renderTasks() {
   const tasks = filteredTasks();
   elements.resultText.textContent = `${tasks.length} vist`;
@@ -263,8 +448,12 @@ function renderTasks() {
     return;
   }
 
-  elements.taskList.innerHTML = tasks.map(task => `
-    <article class="task-card">
+  elements.taskList.innerHTML = tasks.map(task => {
+    const isAwarded = task.awardedTo;
+    const isOwner = state.user && state.user.email === task.ownerEmail;
+
+    return `
+    <article class="task-card ${isAwarded ? 'awarded' : ''}">
       <div class="task-main">
         <div class="task-top">
           <div>
@@ -273,6 +462,7 @@ function renderTasks() {
               <span>${escapeHtml(task.area)}</span>
               <span>${escapeHtml(task.time)}</span>
               <span>${task.bids.length} bud</span>
+              ${isAwarded ? `<span class="awarded-badge">Tildelt ${escapeHtml(isAwarded)}</span>` : ''}
             </div>
           </div>
           <span class="badge">${escapeHtml(task.category)}</span>
@@ -290,21 +480,31 @@ function renderTasks() {
           <span>${escapeHtml(task.contact || 'Kontakt aftales efter accept')}</span>
         </div>
         <div>
-          <strong>Seneste bud</strong>
+          <strong>Bud</strong>
           <ul class="bid-list">
-            ${task.bids.length ? task.bids.slice(-2).map(bid => `
-              <li><strong>${escapeHtml(bid.name)}</strong>: ${escapeHtml(bid.offer)}<br>${escapeHtml(bid.message)}</li>
-            `).join('') : '<li>Ingen bud endnu.</li>'}
+            ${task.bids.length ? task.bids.map(bid => {
+              const isBidder = state.user && state.user.name === bid.name;
+              const isAccepted = isAwarded === bid.name;
+              return `
+                <li style="${isAccepted ? 'background:#eaf5ef;border:1px solid var(--green);' : ''}">
+                  <strong>${escapeHtml(bid.name)}</strong>: ${escapeHtml(bid.offer)}<br>
+                  ${escapeHtml(bid.message)}
+                  ${isAccepted ? '<br><span style="color:var(--green);font-weight:700;font-size:12px;">✓ VALGT</span>' : ''}
+                  ${!isAccepted && canAward(task) ? `<br><button class="accept-btn" data-task-id="${task.id}" data-bidder="${escapeHtml(bid.name)}">Godkend bud</button>` : ''}
+                </li>
+              `;
+            }).join('') : '<li>Ingen bud endnu.</li>'}
           </ul>
         </div>
         <div class="card-actions">
-          <button class="primary bid-button" type="button" data-task-id="${task.id}">Byd ind</button>
+          ${!isAwarded ? `<button class="primary bid-button" type="button" data-task-id="${task.id}">Byd ind</button>` : ''}
           ${canDelete(task) ? `<button class="danger delete-task-button" type="button" data-task-id="${task.id}">Slet</button>` : ''}
         </div>
       </aside>
-    </article>
-  `).join('');
+    </article>`;
+  }).join('');
 
+  // Event listeners: Byd ind
   elements.taskList.querySelectorAll('.bid-button').forEach(button => {
     button.addEventListener('click', () => {
       if (!ensureUser()) return;
@@ -314,6 +514,7 @@ function renderTasks() {
     });
   });
 
+  // Event listeners: Slet
   elements.taskList.querySelectorAll('.delete-task-button').forEach(button => {
     button.addEventListener('click', async () => {
       const task = state.tasks.find(item => item.id === button.dataset.taskId);
@@ -330,6 +531,26 @@ function renderTasks() {
         alert('Kunne ikke slette opgaven. Du har muligvis ikke rettigheder.');
         button.disabled = false;
         button.textContent = 'Slet';
+      }
+    });
+  });
+
+  // Event listeners: Godkend bud
+  elements.taskList.querySelectorAll('.accept-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+      const taskId = button.dataset.taskId;
+      const bidderName = button.dataset.bidder;
+      const task = state.tasks.find(t => t.id === taskId);
+
+      if (!task || !confirm(`Tildel opgaven "${task.title}" til ${bidderName}?`)) return;
+
+      button.disabled = true;
+      button.textContent = 'Tildeler...';
+
+      const success = await awardTask(taskId, bidderName);
+      if (!success) {
+        button.disabled = false;
+        button.textContent = 'Godkend bud';
       }
     });
   });
@@ -487,11 +708,11 @@ elements.bidForm.addEventListener('submit', async event => {
   submitButton.textContent = 'Send bud';
 });
 
-// ─── Init: load from Supabase ───
+// ─── Init: load from Supabase + start realtime ───
 
 (async function init() {
   state.tasks = await loadTasks();
   state.loading = false;
   render();
+  setupRealtimeSubscriptions();
 })();
-
