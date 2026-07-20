@@ -22,7 +22,6 @@ const state = {
   activeCategory: 'Alle',
   activeBidTask: null,
   loading: true,
-  // Realtime subscriptions
   realtimeChannels: []
 };
 
@@ -47,7 +46,7 @@ const elements = {
   toastContainer: document.querySelector('#toastContainer')
 };
 
-// ─── localStorage helpers (user profile only) ───
+// ─── localStorage helpers ───
 
 function readLocal(key, fallback) {
   try {
@@ -62,10 +61,51 @@ function writeLocal(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+// ─── Lyd når pop-up vises ───
+
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(523, ctx.currentTime);       // C5
+    oscillator.frequency.setValueAtTime(659, ctx.currentTime + 0.1); // E5
+    oscillator.frequency.setValueAtTime(784, ctx.currentTime + 0.2); // G5
+
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.5);
+  } catch (e) {
+    // Lyd virker ikke – det er okay
+  }
+}
+
+// ─── Dato-formatering ───
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  const dag = String(d.getDate()).padStart(2, '0');
+  const måned = String(d.getMonth() + 1).padStart(2, '0');
+  const år = d.getFullYear();
+  const timer = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dag}.${måned}.${år} kl. ${timer}:${min}`;
+}
+
 // ─── Toast-notifikationer ───
 
-function showToast(type, title, body, actions = [], ttl = 8000) {
+function showToast(type, title, body, actions = [], ttl = 30000) {
   if (!elements.toastContainer) return;
+
+  // Afspil lyd
+  playNotificationSound();
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
@@ -82,7 +122,7 @@ function showToast(type, title, body, actions = [], ttl = 8000) {
 
   const close = () => {
     toast.classList.add('removing');
-    setTimeout(() => toast.remove(), 250);
+    setTimeout(() => toast.remove(), 300);
   };
 
   toast.querySelector('.toast-close').addEventListener('click', close);
@@ -116,7 +156,6 @@ async function loadTasks() {
     return [];
   }
 
-  // Load bids for all tasks in one query
   const taskIds = tasks.map(t => t.id);
   let bidsMap = {};
 
@@ -229,8 +268,6 @@ async function softDeleteTask(taskId) {
   return data === true;
 }
 
-// ─── Award-funktion: tildel opgave til en byder ───
-
 async function awardTask(taskId, bidderName) {
   if (!state.user) return false;
 
@@ -245,7 +282,6 @@ async function awardTask(taskId, bidderName) {
     return false;
   }
 
-  // Opdater local state
   const task = state.tasks.find(t => t.id === taskId);
   if (task) {
     task.awardedTo = bidderName;
@@ -255,14 +291,12 @@ async function awardTask(taskId, bidderName) {
   return true;
 }
 
-// ─── Realtime: Lyt efter nye bud ───
+// ─── Realtime ───
 
 function setupRealtimeSubscriptions() {
-  // Ryd gamle subscriptions
   state.realtimeChannels.forEach(ch => sb.removeChannel(ch));
   state.realtimeChannels = [];
 
-  // 1) Lyt efter nye bud
   const bidChannel = sb
     .channel('bids-realtime')
     .on('postgres_changes',
@@ -273,7 +307,6 @@ function setupRealtimeSubscriptions() {
 
   state.realtimeChannels.push(bidChannel);
 
-  // 2) Lyt efter opgave-opdateringer (awarded_to ændringer)
   const taskChannel = sb
     .channel('tasks-realtime')
     .on('postgres_changes',
@@ -286,11 +319,9 @@ function setupRealtimeSubscriptions() {
 }
 
 function handleNewBid(newBid) {
-  // Find opgaven buddet er på
   const task = state.tasks.find(t => t.id === newBid.task_id);
   if (!task) return;
 
-  // Tilføj buddet til local state (hvis ikke allerede der)
   const alreadyExists = task.bids.some(b => b.name === newBid.bidder_name && b.offer === newBid.offer);
   if (!alreadyExists) {
     task.bids.push({
@@ -301,7 +332,6 @@ function handleNewBid(newBid) {
     renderTasks();
   }
 
-  // Hvis den indloggede bruger er opgave-ejeren → vis notifikation
   if (state.user && state.user.email === task.ownerEmail) {
     const taskTitle = task.title.length > 40 ? task.title.slice(0, 40) + '…' : task.title;
     showToast(
@@ -312,13 +342,12 @@ function handleNewBid(newBid) {
         { id: 'view', label: 'Se opgave', primary: true, handler: () => scrollToTask(task.id) },
         { id: 'dismiss', label: 'Luk', handler: () => {} }
       ],
-      12000
+      30000
     );
   }
 }
 
 function handleTaskUpdate(updatedTask) {
-  // Opdater local state
   const task = state.tasks.find(t => t.id === updatedTask.id);
   if (!task) return;
 
@@ -328,9 +357,7 @@ function handleTaskUpdate(updatedTask) {
 
   renderTasks();
 
-  // Hvis opgaven blev tildelt nogen
   if (nowAwarded && nowAwarded !== wasAwarded) {
-    // Hvis den indloggede bruger er den der fik opgaven → vis notifikation
     if (state.user && state.user.name === nowAwarded) {
       showToast(
         'success',
@@ -340,7 +367,7 @@ function handleTaskUpdate(updatedTask) {
           { id: 'view', label: 'Se opgave', primary: true, handler: () => scrollToTask(task.id) },
           { id: 'dismiss', label: 'Luk', handler: () => {} }
         ],
-        15000
+        30000
       );
     }
   }
@@ -348,7 +375,6 @@ function handleTaskUpdate(updatedTask) {
 
 function scrollToTask(taskId) {
   const cards = document.querySelectorAll('.task-card');
-  // Find kortet med data-task-id
   for (const card of cards) {
     const btn = card.querySelector('[data-task-id]');
     if (btn && btn.dataset.taskId === taskId) {
@@ -426,7 +452,6 @@ function canDelete(task) {
 }
 
 function canAward(task) {
-  // Kan kun tildele hvis man er ejer, og opgaven ikke allerede er tildelt
   if (!state.user) return false;
   if (task.awardedTo) return false;
   return state.user.email === task.ownerEmail || state.user.email === ADMIN_EMAIL;
@@ -464,6 +489,7 @@ function renderTasks() {
               <span>${task.bids.length} bud</span>
               ${isAwarded ? `<span class="awarded-badge">Tildelt ${escapeHtml(isAwarded)}</span>` : ''}
             </div>
+            <div class="task-date">Oprettet ${formatDate(task.createdAt)}</div>
           </div>
           <span class="badge">${escapeHtml(task.category)}</span>
         </div>
@@ -504,7 +530,6 @@ function renderTasks() {
     </article>`;
   }).join('');
 
-  // Event listeners: Byd ind
   elements.taskList.querySelectorAll('.bid-button').forEach(button => {
     button.addEventListener('click', () => {
       if (!ensureUser()) return;
@@ -514,7 +539,6 @@ function renderTasks() {
     });
   });
 
-  // Event listeners: Slet
   elements.taskList.querySelectorAll('.delete-task-button').forEach(button => {
     button.addEventListener('click', async () => {
       const task = state.tasks.find(item => item.id === button.dataset.taskId);
@@ -535,7 +559,6 @@ function renderTasks() {
     });
   });
 
-  // Event listeners: Godkend bud
   elements.taskList.querySelectorAll('.accept-btn').forEach(button => {
     button.addEventListener('click', async () => {
       const taskId = button.dataset.taskId;
@@ -665,7 +688,6 @@ elements.taskForm.addEventListener('submit', async event => {
     elements.taskDialog.close();
     render();
 
-    // Send to Google Sheets in background
     try {
       await sendTaskToSharedList(savedTask);
     } catch (error) {
@@ -708,7 +730,7 @@ elements.bidForm.addEventListener('submit', async event => {
   submitButton.textContent = 'Send bud';
 });
 
-// ─── Init: load from Supabase + start realtime ───
+// ─── Init ───
 
 (async function init() {
   state.tasks = await loadTasks();
