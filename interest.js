@@ -87,6 +87,18 @@
     setStatus("Dine interesser er gemt i denne browser.", false);
   }
 
+  async function upsertToSupabase(email, categories) {
+    if (typeof sb === 'undefined') return false;
+    try {
+      const { error } = await sb
+        .from('subscriptions')
+        .upsert({ email, categories }, { onConflict: 'email' });
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -104,6 +116,12 @@
       categories,
       createdAt: new Date().toISOString()
     };
+
+    // Save to Supabase first
+    const saved = await upsertToSupabase(signup.email, categories);
+    if (saved) {
+      setStatus("Dine interesser er gemt. Du får besked når relevante opgaver oprettes.", false);
+    }
 
     localStorage.setItem(storageKey, JSON.stringify([...signups, signup]));
     const subjectText = "Interesseliste - Trøjborg-appen";

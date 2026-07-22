@@ -602,6 +602,58 @@ async function sendTaskToSharedList(task) {
   });
 }
 
+// ─── Toast notification ───
+
+function showSimpleToast(message, duration = 4000) {
+  const toast = document.createElement('div');
+  toast.className = 'toast-notification';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('visible'));
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 400);
+  }, duration);
+}
+
+// ─── Notify subscribers ───
+
+async function notifySubscribers(task) {
+  try {
+    const { data: subs, error } = await sb
+      .from('subscriptions')
+      .select('email, categories')
+      .contains('categories', [task.category]);
+
+    if (error || !subs || subs.length === 0) return;
+
+    const ownerEmail = state.user?.email || '';
+    const matches = subs.filter(s => s.email !== ownerEmail);
+    if (matches.length === 0) return;
+
+    for (const sub of matches) {
+      fetch(sharedEndpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'notification',
+          subscriberEmail: sub.email,
+          taskTitle: task.title,
+          taskCategory: task.category,
+          taskArea: task.area,
+          taskBudget: task.budget,
+          taskOwner: task.owner
+        })
+      }).catch(() => {});
+    }
+
+    showSimpleToast(`${matches.length} interesserede i "${task.category}" notificeret`);
+  } catch (err) {
+    console.warn('Notifikation fejlede:', err);
+  }
+}
+
 function render() {
   renderAccount();
   renderFilters();
@@ -693,6 +745,9 @@ elements.taskForm.addEventListener('submit', async event => {
     } catch (error) {
       console.warn('Opgaven blev gemt i Supabase, men kunne ikke sendes til Google Sheets.', error);
     }
+
+    // Notify subscribers in background
+    notifySubscribers(savedTask).catch(() => {});
   } else {
     alert('Kunne ikke oprette opgaven. Prøv igen.');
   }
