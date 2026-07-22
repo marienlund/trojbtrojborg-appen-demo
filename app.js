@@ -635,20 +635,24 @@ async function notifySubscribers(task) {
     console.log('Notifying', matches.length, 'subscribers:', matches);
     for (const sub of matches) {
       console.log('Sending notification to:', sub.email);
+      const payload = {
+        type: 'notification',
+        subscriberEmail: sub.email,
+        taskTitle: task.title,
+        taskCategory: task.category,
+        taskArea: task.area || 'Trøjborg',
+        taskBudget: task.budget || 'Ikke angivet',
+        taskOwner: task.owner
+      };
+      console.log('Payload:', JSON.stringify(payload));
+      // Use same approach as sendTaskToSharedList (no-cors + text/plain)
       fetch(sharedEndpoint, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          type: 'notification',
-          subscriberEmail: sub.email,
-          taskTitle: task.title,
-          taskCategory: task.category,
-          taskArea: task.area,
-          taskBudget: task.budget,
-          taskOwner: task.owner
-        })
-      }).catch(() => {});
+        body: JSON.stringify(payload)
+      }).then(r => console.log('Notification sent:', r.type))
+        .catch(err => console.error('Notification error:', err));
     }
 
     showSimpleToast(`${matches.length} interesserede i "${task.category}" notificeret`);
