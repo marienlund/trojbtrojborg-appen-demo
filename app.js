@@ -627,11 +627,14 @@ async function notifySubscribers(task) {
 
     if (error || !subs || subs.length === 0) return;
 
-    const ownerEmail = state.user?.email || '';
-    const matches = subs.filter(s => s.email !== ownerEmail);
+    // const ownerEmail = state.user?.email || '';
+    // const matches = subs.filter(s => s.email !== ownerEmail);
+    const matches = subs; // TODO: re-enable owner filter after testing
     if (matches.length === 0) return;
 
+    console.log('Notifying', matches.length, 'subscribers:', matches);
     for (const sub of matches) {
+      console.log('Sending notification to:', sub.email);
       fetch(sharedEndpoint, {
         method: 'POST',
         mode: 'no-cors',
