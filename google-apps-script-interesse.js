@@ -1,6 +1,6 @@
 const SPREADSHEET_ID = "1nEwBvy2xW5ZXrGuEX_sqNwGlREMMzSOCnLa83Lp-gbo";
 const SHEET_NAME = "Interesseliste";
-const NOTIFY_EMAIL = "kontakt@trojborgappen.dk";
+const NOTIFY_EMAIL = "jensenhp79@gmail.com, hpj8260@yahoo.dk";
 
 function doGet() {
   const sheet = getOrCreateSheet();

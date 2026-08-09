@@ -855,7 +855,7 @@ if (elements.emailForm) {
       }, 2000);
     } catch (error) {
       console.warn('Kunne ikke sende via server, åbner mailprogram:', error);
-      const mailtoUrl = `mailto:kontakt@trojborgappen.dk?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Fra: ' + name + ' (' + email + ')\n\n' + message)}`;
+      const mailtoUrl = `mailto:jensenhp79@gmail.com?cc=hpj8260@yahoo.dk&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Fra: ' + name + ' (' + email + ')\n\n' + message)}`;
       window.location.href = mailtoUrl;
       if (elements.emailDialog) elements.emailDialog.close();
     }
