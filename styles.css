@@ -659,22 +659,27 @@ dialog::backdrop {
     grid-template-columns: 1fr;
   }
 
+  /* Horizontal swipeable category chips on mobile */
   .toolbar {
-    gap: 14px;
+    gap: 12px;
     padding: 14px 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
-  /* Horizontal swipeable category chips on mobile */
   .filters {
-    justify-content: flex-start;
-    overflow-x: auto;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
+    padding-bottom: 8px;
     margin: 0 -12px;
     padding-left: 12px;
     padding-right: 12px;
     scrollbar-width: none; /* Firefox */
+    touch-action: pan-x;
   }
 
   .filters::-webkit-scrollbar {
@@ -683,7 +688,8 @@ dialog::backdrop {
 
   .filter-button {
     scroll-snap-align: start;
-    flex-shrink: 0;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
   }
 
   .panel {
