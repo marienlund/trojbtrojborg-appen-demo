@@ -22,7 +22,136 @@ const state = {
   activeCategory: 'Alle',
   activeBidTask: null,
   loading: true,
-  realtimeChannels: []
+  realtimeChannels: [],
+  lang: readLocal('trojborg-lang', 'da')
+};
+
+const categoryLabels = {
+  da: {
+    'Alle': 'Alle',
+    'Have og gård': 'Have og gård',
+    'Indkøb': 'Indkøb',
+    'Reparationer': 'Reparationer',
+    'Dyr': 'Dyr',
+    'Børn': 'Børn',
+    'Andet': 'Andet'
+  },
+  en: {
+    'Alle': 'All',
+    'Have og gård': 'Garden & Yard',
+    'Indkøb': 'Groceries',
+    'Reparationer': 'Repairs',
+    'Dyr': 'Pets',
+    'Børn': 'Kids',
+    'Andet': 'Other'
+  }
+};
+
+const i18n = {
+  da: {
+    tagline: 'Små lokale opgaver. Hurtige bud. Folk fra området.',
+    quote: '“Trøjborg bliver et bedre sted, når vi hjælper hinanden. Del dine evner med en nabo – nogle gange mod betaling, men allerhelst med den varme og hjælpsomhed, der kendetegnede den gamle Trøjborg-ånd.”',
+    eyebrow_market: 'Trøjborgs lokale opgavemarked',
+    hero_h2: 'Få små opgaver klaret tæt på dig',
+    hero_p: 'Opret en opgave med pris og tidspunkt. Lokale hjælpere kan byde ind, og du vælger selv hvem du vil gå videre med.',
+    create_task: '+ Opret opgave',
+    see_tasks: 'Se åbne opgaver',
+    step1_t: '1. Beskriv opgaven',
+    step1_d: 'Fortæl hvad, hvor og hvornår.',
+    step2_t: '2. Modtag bud',
+    step2_d: 'Lokale hjælpere byder ind.',
+    step3_t: '3. Vælg hjælper',
+    step3_d: 'Aftal detaljerne direkte.',
+    search_placeholder: 'Søg efter opgave, område eller tekst',
+    overview: 'Overblik',
+    open_tasks_count: 'åbne opgaver',
+    bids_count: 'bud afgivet',
+    trust_title: 'Tryghed i lille skala',
+    trust_1: 'Profil kræves før opgaver og bud',
+    trust_2: 'Kun for private - firmaopslag hører ikke hjemme her',
+    trust_3: 'Betaling aftales direkte mellem opretter og hjælper',
+    trust_4: 'Kontakt deles først når man går videre',
+    trust_5: 'Opgaver er lokale for Trøjborg',
+    trust_6: 'Opgaver gemmes online og deles på tværs af brugere',
+    open_tasks_title: 'Åbne opgaver nær Trøjborg',
+    open_tasks_prefix: 'Åbne opgaver',
+    no_tasks: 'Ingen opgaver matcher søgningen lige nu.',
+    tasks_count_suffix: 'vist',
+    tasks_in_category: 'opgave(r) i',
+    interest_eyebrow: 'Interesseliste',
+    interest_title: 'Få besked om relevante opgaver',
+    interest_desc: 'Vælg de typer opgaver du gerne vil høre om...',
+    interest_email_label: 'Email',
+    interest_legend: 'Jeg vil gerne høre om',
+    interest_submit: 'Gem interesse',
+    contact_eyebrow: 'Kontakt',
+    contact_title: 'Spørgsmål eller feedback?',
+    contact_desc: 'Skriv til os, hvis du har idéer, spørgsmål eller vil hjælpe med at gøre Trøjborg-appen bedre.',
+    send_mail_btn: '✉️ Skriv en mail',
+    sponsor_title: 'Vil du nå lokale folk på Trøjborg?',
+    sponsor_desc: 'Vi åbner for få relevante lokale sponsorer, der passer til området og appens formål.',
+    sponsor_btn: '✉️ Skriv om sponsorplads',
+    login_btn: 'Log ind / opret',
+    logout_btn: 'Skift profil',
+    budget_label: 'Budget',
+    bids_label: 'bud',
+    latest_bids: 'Seneste bud',
+    no_bids: 'Ingen bud endnu.',
+    bid_btn: 'Byd ind',
+    delete_btn: 'Slet'
+  },
+  en: {
+    tagline: 'Small local tasks. Quick offers. Local neighbors.',
+    quote: '“Trøjborg becomes a better place when we help each other. Share your skills with a neighbor – sometimes for payment, but best of all with the warmth and helpfulness of the community spirit.”',
+    eyebrow_market: 'Trøjborg local task marketplace',
+    hero_h2: 'Get small tasks done near you',
+    hero_p: 'Post a task with price and time. Local helpers place offers, and you choose who to move forward with.',
+    create_task: '+ Post task',
+    see_tasks: 'View open tasks',
+    step1_t: '1. Describe task',
+    step1_d: 'Tell what, where and when.',
+    step2_t: '2. Receive offers',
+    step2_d: 'Local helpers place offers.',
+    step3_t: '3. Choose helper',
+    step3_d: 'Agree on details directly.',
+    search_placeholder: 'Search for task, area or text',
+    overview: 'Overview',
+    open_tasks_count: 'open tasks',
+    bids_count: 'offers placed',
+    trust_title: 'Safety on a local scale',
+    trust_1: 'Profile required before tasks and offers',
+    trust_2: 'Private only - company posts do not belong here',
+    trust_3: 'Payment agreed directly between creator and helper',
+    trust_4: 'Contact details shared only upon acceptance',
+    trust_5: 'Tasks are local to Trøjborg',
+    trust_6: 'Tasks stored online and shared across users',
+    open_tasks_title: 'Open tasks near Trøjborg',
+    open_tasks_prefix: 'Open tasks',
+    no_tasks: 'No tasks match your search right now.',
+    tasks_count_suffix: 'shown',
+    tasks_in_category: 'task(s) in',
+    interest_eyebrow: 'Interest List',
+    interest_title: 'Get notified about relevant tasks',
+    interest_desc: 'Select the types of tasks you would like to hear about...',
+    interest_email_label: 'Email',
+    interest_legend: 'I would like to hear about',
+    interest_submit: 'Save interest',
+    contact_eyebrow: 'Contact',
+    contact_title: 'Questions or feedback?',
+    contact_desc: 'Write to us if you have ideas, questions or want to help...',
+    send_mail_btn: '✉️ Send email',
+    sponsor_title: 'Want to reach local people in Trøjborg?',
+    sponsor_desc: 'We open for a few relevant local sponsors...',
+    sponsor_btn: '✉️ Inquire about sponsorship',
+    login_btn: 'Log in / Sign up',
+    logout_btn: 'Switch profile',
+    budget_label: 'Budget',
+    bids_label: 'offers',
+    latest_bids: 'Latest offers',
+    no_bids: 'No offers yet.',
+    bid_btn: 'Make offer',
+    delete_btn: 'Delete'
+  }
 };
 
 const elements = {
@@ -405,9 +534,39 @@ function ensureUser() {
   return false;
 }
 
+function setLanguage(lang) {
+  state.lang = lang;
+  writeLocal('trojborg-lang', lang);
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+
+  const t = i18n[lang] || i18n.da;
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (t[key]) el.textContent = t[key];
+  });
+
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const key = el.dataset.i18nPh;
+    if (t[key]) el.placeholder = t[key];
+  });
+
+  document.querySelectorAll('[data-cat-key]').forEach(el => {
+    const key = el.dataset.catKey;
+    const catMap = categoryLabels[lang] || categoryLabels.da;
+    if (catMap[key]) el.textContent = catMap[key];
+  });
+
+  render();
+}
+
 function renderAccount() {
+  const t = i18n[state.lang] || i18n.da;
   if (!state.user) {
-    elements.accountArea.innerHTML = '<button class="secondary" type="button" id="loginButton">Log ind / opret</button>';
+    elements.accountArea.innerHTML = `<button class="secondary" type="button" id="loginButton">${t.login_btn}</button>`;
     document.querySelector('#loginButton').addEventListener('click', () => elements.authDialog.showModal());
     return;
   }
@@ -417,7 +576,7 @@ function renderAccount() {
       <span class="avatar">${state.user.name.slice(0, 1).toUpperCase()}</span>
       <span>${escapeHtml(state.user.name)}</span>
     </div>
-    <button class="secondary" type="button" id="logoutButton">Skift profil</button>
+    <button class="secondary" type="button" id="logoutButton">${t.logout_btn}</button>
   `;
   document.querySelector('#logoutButton').addEventListener('click', () => elements.authDialog.showModal());
 }
@@ -433,10 +592,12 @@ const categoryIcons = {
 };
 
 function renderFilters() {
+  const catMap = categoryLabels[state.lang] || categoryLabels.da;
+
   elements.categoryFilters.innerHTML = categories.map(category => `
     <button class="filter-button ${category === state.activeCategory ? 'active' : ''}" type="button" data-category="${category}">
       <span>${categoryIcons[category] || '🏷️'}</span>
-      <span>${category}</span>
+      <span>${catMap[category] || category}</span>
     </button>
   `).join('');
 
@@ -457,7 +618,7 @@ function renderFilters() {
 
   elements.taskCategory.innerHTML = categories
     .filter(category => category !== 'Alle')
-    .map(category => `<option value="${category}">${categoryIcons[category] || ''} ${category}</option>`)
+    .map(category => `<option value="${category}">${categoryIcons[category] || ''} ${catMap[category] || category}</option>`)
     .join('');
 }
 
@@ -485,21 +646,25 @@ function canAward(task) {
 
 function renderTasks() {
   const tasks = filteredTasks();
+  const t = i18n[state.lang] || i18n.da;
+  const catMap = categoryLabels[state.lang] || categoryLabels.da;
   
   const boardHeadTitle = document.querySelector('.board-head h2');
   if (boardHeadTitle) {
     if (state.activeCategory && state.activeCategory !== 'Alle') {
       const icon = categoryIcons[state.activeCategory] || '🏷️';
-      boardHeadTitle.innerHTML = `Åbne opgaver <span class="category-pop-header">${icon} ${escapeHtml(state.activeCategory)}</span>`;
+      const catLabel = catMap[state.activeCategory] || state.activeCategory;
+      boardHeadTitle.innerHTML = `${t.open_tasks_prefix} <span class="category-pop-header">${icon} ${escapeHtml(catLabel)}</span>`;
     } else {
-      boardHeadTitle.innerHTML = 'Åbne opgaver nær Trøjborg';
+      boardHeadTitle.innerHTML = t.open_tasks_title;
     }
   }
 
   if (state.activeCategory && state.activeCategory !== 'Alle') {
-    elements.resultText.textContent = `${tasks.length} opgave(r) i ${state.activeCategory}`;
+    const catLabel = catMap[state.activeCategory] || state.activeCategory;
+    elements.resultText.textContent = `${tasks.length} ${t.tasks_in_category} ${catLabel}`;
   } else {
-    elements.resultText.textContent = `${tasks.length} vist`;
+    elements.resultText.textContent = `${tasks.length} ${t.tasks_count_suffix}`;
   }
 
   elements.openCount.textContent = state.tasks.length;
@@ -511,7 +676,7 @@ function renderTasks() {
   }
 
   if (!tasks.length) {
-    elements.taskList.innerHTML = `<div class="empty-state">Ingen opgaver matcher ${state.activeCategory !== 'Alle' ? 'kategorien "' + escapeHtml(state.activeCategory) + '"' : 'søgningen'} lige nu.</div>`;
+    elements.taskList.innerHTML = `<div class="empty-state">${t.no_tasks}</div>`;
     return;
   }
 
@@ -900,9 +1065,18 @@ if (elements.emailForm) {
   });
 }
 
+// ─── Language Switcher Handlers ───
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setLanguage(btn.dataset.lang);
+  });
+});
+
 // ─── Init ───
 
 (async function init() {
+  setLanguage(state.lang);
   state.tasks = await loadTasks();
   state.loading = false;
   render();

@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Trøjborg-appen</title>
-  <link rel="stylesheet" href="styles.css?v=20260809-10">
-  <link rel="stylesheet" href="contact.css?v=20260809-10">
-  <link rel="stylesheet" href="interest.css?v=20260809-10">
-  <link rel="stylesheet" href="notifications.css?v=20260809-10">
+  <link rel="stylesheet" href="styles.css?v=20260809-11">
+  <link rel="stylesheet" href="contact.css?v=20260809-11">
+  <link rel="stylesheet" href="interest.css?v=20260809-11">
+  <link rel="stylesheet" href="notifications.css?v=20260809-11">
 </head>
 <body>
   <header class="app-header">
@@ -16,27 +16,33 @@
       <div class="brand-mark" aria-hidden="true">T</div>
       <div>
         <h1>Trøjborg-appen</h1>
-        <p>Små lokale opgaver. Hurtige bud. Folk fra området.</p>
+        <p data-i18n="tagline">Små lokale opgaver. Hurtige bud. Folk fra området.</p>
       </div>
     </div>
-    <div class="account" id="accountArea"></div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="lang-switcher" id="langSwitcher">
+        <button class="lang-btn active" data-lang="da" type="button" aria-label="Skift til Dansk">🇩🇰 DA</button>
+        <button class="lang-btn" data-lang="en" type="button" aria-label="Switch to English">🇬🇧 EN</button>
+      </div>
+      <div class="account" id="accountArea"></div>
+    </div>
   </header>
 
   <main>
     <section style="background:#14532d;color:#fff;text-align:center;padding:2rem 1.5rem;">
-      <p style="max-width:640px;margin:0 auto;font-size:1.05rem;line-height:1.8;font-style:italic;opacity:0.9;">
+      <p data-i18n="quote" style="max-width:640px;margin:0 auto;font-size:1.05rem;line-height:1.8;font-style:italic;opacity:0.9;">
         “Trøjborg bliver et bedre sted, når vi hjælper hinanden. Del dine evner med en nabo – nogle gange mod betaling, men allerhelst med den varme og hjælpsomhed, der kendetegnede den gamle Trøjborg-ånd.”
       </p>
     </section>
 
     <section class="intro" aria-label="Overblik">
       <div class="intro-copy">
-        <span class="eyebrow">Trøjborgs lokale opgavemarked</span>
-        <h2>Få små opgaver klaret tæt på dig</h2>
-        <p>Opret en opgave med pris og tidspunkt. Lokale hjælpere kan byde ind, og du vælger selv hvem du vil gå videre med.</p>
+        <span class="eyebrow" data-i18n="eyebrow_market">Trøjborgs lokale opgavemarked</span>
+        <h2 data-i18n="hero_h2">Få små opgaver klaret tæt på dig</h2>
+        <p data-i18n="hero_p">Opret en opgave med pris og tidspunkt. Lokale hjælpere kan byde ind, og du vælger selv hvem du vil gå videre med.</p>
         <div class="intro-actions">
-          <button class="primary" id="heroTaskButton" type="button">+ Opret opgave</button>
-          <a class="text-link" href="#taskList">Se åbne opgaver</a>
+          <button class="primary" id="heroTaskButton" type="button" data-i18n="create_task">+ Opret opgave</button>
+          <a class="text-link" href="#taskList" data-i18n="see_tasks">Se åbne opgaver</a>
         </div>
       </div>
       <img src="assets/neighborhood.svg" alt="Illustration af et grønt Trøjborg-lignende nabolag med huse og cykler">
@@ -44,57 +50,57 @@
 
     <section class="market-strip" aria-label="Sådan fungerer appen">
       <div>
-        <strong>1. Beskriv opgaven</strong>
-        <span>Fortæl hvad, hvor og hvornår.</span>
+        <strong data-i18n="step1_t">1. Beskriv opgaven</strong>
+        <span data-i18n="step1_d">Fortæl hvad, hvor og hvornår.</span>
       </div>
       <div>
-        <strong>2. Modtag bud</strong>
-        <span>Lokale hjælpere byder ind.</span>
+        <strong data-i18n="step2_t">2. Modtag bud</strong>
+        <span data-i18n="step2_d">Lokale hjælpere byder ind.</span>
       </div>
       <div>
-        <strong>3. Vælg hjælper</strong>
-        <span>Aftal detaljerne direkte.</span>
+        <strong data-i18n="step3_t">3. Vælg hjælper</strong>
+        <span data-i18n="step3_d">Aftal detaljerne direkte.</span>
       </div>
     </section>
 
     <section class="toolbar" aria-label="Filtrering">
       <div class="search-wrap">
         <span aria-hidden="true">⌕</span>
-        <input id="searchInput" type="search" placeholder="Søg efter opgave, område eller tekst">
+        <input id="searchInput" type="search" data-i18n-ph="search_placeholder" placeholder="Søg efter opgave, område eller tekst">
       </div>
       <div class="filters-scroll-wrap">
         <div class="filters" id="categoryFilters" aria-label="Kategorier"></div>
       </div>
-      <button class="primary" id="openTaskButton" type="button">+ Opret opgave</button>
+      <button class="primary" id="openTaskButton" type="button" data-i18n="create_task">+ Opret opgave</button>
     </section>
 
     <section class="content-grid">
       <aside class="panel">
-        <h2>Overblik</h2>
+        <h2 data-i18n="overview">Overblik</h2>
         <div class="stats">
           <div>
             <strong id="openCount">0</strong>
-            <span>åbne opgaver</span>
+            <span data-i18n="open_tasks_count">åbne opgaver</span>
           </div>
           <div>
             <strong id="bidCount">0</strong>
-            <span>bud afgivet</span>
+            <span data-i18n="bids_count">bud afgivet</span>
           </div>
         </div>
-        <h3>Tryghed i lille skala</h3>
+        <h3 data-i18n="trust_title">Tryghed i lille skala</h3>
         <ul class="category-list">
-          <li>Profil kræves før opgaver og bud</li>
-          <li>Kun for private - firmaopslag hører ikke hjemme her</li>
-          <li>Betaling aftales direkte mellem opretter og hjælper</li>
-          <li>Kontakt deles først når man går videre</li>
-          <li>Opgaver er lokale for Trøjborg</li>
-          <li>Opgaver gemmes online og deles på tværs af brugere</li>
+          <li data-i18n="trust_1">Profil kræves før opgaver og bud</li>
+          <li data-i18n="trust_2">Kun for private - firmaopslag hører ikke hjemme her</li>
+          <li data-i18n="trust_3">Betaling aftales direkte mellem opretter og hjælper</li>
+          <li data-i18n="trust_4">Kontakt deles først når man går videre</li>
+          <li data-i18n="trust_5">Opgaver er lokale for Trøjborg</li>
+          <li data-i18n="trust_6">Opgaver gemmes online og deles på tværs af brugere</li>
         </ul>
       </aside>
 
       <section class="task-board" aria-live="polite">
         <div class="board-head">
-          <h2>Åbne opgaver nær Trøjborg</h2>
+          <h2 data-i18n="open_tasks_title">Åbne opgaver nær Trøjborg</h2>
           <span id="resultText"></span>
         </div>
         <div class="tasks" id="taskList"></div>
@@ -103,45 +109,45 @@
 
     <section class="interest-section" aria-label="Interesseliste">
       <div class="interest-copy">
-        <span class="eyebrow">Interesseliste</span>
-        <h2>Få besked om relevante opgaver</h2>
-        <p>Vælg de typer opgaver du gerne vil høre om. I prototypen gemmes interessen i denne browser, og senere kan den kobles til rigtige mail-notifikationer.</p>
+        <span class="eyebrow" data-i18n="interest_eyebrow">Interesseliste</span>
+        <h2 data-i18n="interest_title">Få besked om relevante opgaver</h2>
+        <p data-i18n="interest_desc">Vælg de typer opgaver du gerne vil høre om...</p>
       </div>
       <form class="interest-form" id="interestForm">
         <label for="interestEmail">
-          Email
+          <span data-i18n="interest_email_label">Email</span>
           <input id="interestEmail" type="email" autocomplete="email" required placeholder="din@email.dk">
         </label>
         <fieldset>
-          <legend>Jeg vil gerne høre om</legend>
+          <legend data-i18n="interest_legend">Jeg vil gerne høre om</legend>
           <div class="interest-options">
-            <label><input type="checkbox" name="interestCategory" value="Have og gård"> Have og gård</label>
-            <label><input type="checkbox" name="interestCategory" value="Indkøb"> Indkøb</label>
-            <label><input type="checkbox" name="interestCategory" value="Reparationer"> Reparationer</label>
-            <label><input type="checkbox" name="interestCategory" value="Dyr"> Dyr</label>
-            <label><input type="checkbox" name="interestCategory" value="Børn"> Børn</label>
-            <label><input type="checkbox" name="interestCategory" value="Andet"> Andet</label>
+            <label><input type="checkbox" name="interestCategory" value="Have og gård"> <span data-cat-key="Have og gård">Have og gård</span></label>
+            <label><input type="checkbox" name="interestCategory" value="Indkøb"> <span data-cat-key="Indkøb">Indkøb</span></label>
+            <label><input type="checkbox" name="interestCategory" value="Reparationer"> <span data-cat-key="Reparationer">Reparationer</span></label>
+            <label><input type="checkbox" name="interestCategory" value="Dyr"> <span data-cat-key="Dyr">Dyr</span></label>
+            <label><input type="checkbox" name="interestCategory" value="Børn"> <span data-cat-key="Børn">Børn</span></label>
+            <label><input type="checkbox" name="interestCategory" value="Andet"> <span data-cat-key="Andet">Andet</span></label>
           </div>
         </fieldset>
-        <button class="primary" type="submit">Gem interesse</button>
+        <button class="primary" type="submit" data-i18n="interest_submit">Gem interesse</button>
         <p class="interest-status" id="interestStatus" role="status"></p>
       </form>
     </section>
 
     <section class="contact-section" aria-label="Kontakt og sponsor">
       <div>
-        <span class="eyebrow">Kontakt</span>
-        <h2>Spørgsmål eller feedback?</h2>
-        <p>Skriv til os, hvis du har idéer, spørgsmål eller vil hjælpe med at gøre Trøjborg-appen bedre.</p>
+        <span class="eyebrow" data-i18n="contact_eyebrow">Kontakt</span>
+        <h2 data-i18n="contact_title">Spørgsmål eller feedback?</h2>
+        <p data-i18n="contact_desc">Skriv til os, hvis du har idéer, spørgsmål eller vil hjælpe med at gøre Trøjborg-appen bedre.</p>
         <div class="contact-actions">
-          <button class="primary open-email-button" type="button" data-subject="Spørgsmål eller feedback">✉️ Skriv en mail</button>
+          <button class="primary open-email-button" type="button" data-subject="Spørgsmål eller feedback" data-i18n="send_mail_btn">✉️ Skriv en mail</button>
         </div>
       </div>
       <div class="sponsor-box">
-        <h3>Vil du nå lokale folk på Trøjborg?</h3>
-        <p>Vi åbner for få relevante lokale sponsorer, der passer til området og appens formål.</p>
+        <h3 data-i18n="sponsor_title">Vil du nå lokale folk på Trøjborg?</h3>
+        <p data-i18n="sponsor_desc">Vi åbner for få relevante lokale sponsorer, der passer til området og appens formål.</p>
         <div class="contact-actions">
-          <button class="secondary open-email-button" type="button" data-subject="Sponsorplads på Trøjborg-appen">✉️ Skriv om sponsorplads</button>
+          <button class="secondary open-email-button" type="button" data-subject="Sponsorplads på Trøjborg-appen" data-i18n="sponsor_btn">✉️ Skriv om sponsorplads</button>
           <a href="mailto:kontakt@trojborgappen.dk?subject=Sponsorplads%20i%20Tr%C3%B8jborg-appen">kontakt@trojborgappen.dk</a>
         </div>
       </div>
@@ -269,8 +275,8 @@
 
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="interest-config.js?v=20260809-10"></script>
-  <script src="app.js?v=20260809-10"></script>
-  <script src="interest.js?v=20260809-10"></script>
+  <script src="interest-config.js?v=20260809-11"></script>
+  <script src="app.js?v=20260809-11"></script>
+  <script src="interest.js?v=20260809-11"></script>
 </body>
 </html>
