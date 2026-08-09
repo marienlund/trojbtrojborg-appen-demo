@@ -422,23 +422,42 @@ function renderAccount() {
   document.querySelector('#logoutButton').addEventListener('click', () => elements.authDialog.showModal());
 }
 
+const categoryIcons = {
+  'Alle': '🏷️',
+  'Have og gård': '🌿',
+  'Indkøb': '🛒',
+  'Reparationer': '🛠️',
+  'Dyr': '🐕',
+  'Børn': '👶',
+  'Andet': '✨'
+};
+
 function renderFilters() {
   elements.categoryFilters.innerHTML = categories.map(category => `
     <button class="filter-button ${category === state.activeCategory ? 'active' : ''}" type="button" data-category="${category}">
-      ${category}
+      <span>${categoryIcons[category] || '🏷️'}</span>
+      <span>${category}</span>
     </button>
   `).join('');
 
   elements.categoryFilters.querySelectorAll('button').forEach(button => {
     button.addEventListener('click', () => {
+      const isNew = state.activeCategory !== button.dataset.category;
       state.activeCategory = button.dataset.category;
       render();
+
+      if (isNew) {
+        const board = document.querySelector('.task-board');
+        if (board) {
+          board.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
     });
   });
 
   elements.taskCategory.innerHTML = categories
     .filter(category => category !== 'Alle')
-    .map(category => `<option value="${category}">${category}</option>`)
+    .map(category => `<option value="${category}">${categoryIcons[category] || ''} ${category}</option>`)
     .join('');
 }
 
@@ -466,7 +485,23 @@ function canAward(task) {
 
 function renderTasks() {
   const tasks = filteredTasks();
-  elements.resultText.textContent = `${tasks.length} vist`;
+  
+  const boardHeadTitle = document.querySelector('.board-head h2');
+  if (boardHeadTitle) {
+    if (state.activeCategory && state.activeCategory !== 'Alle') {
+      const icon = categoryIcons[state.activeCategory] || '🏷️';
+      boardHeadTitle.innerHTML = `Åbne opgaver <span class="category-pop-header">${icon} ${escapeHtml(state.activeCategory)}</span>`;
+    } else {
+      boardHeadTitle.innerHTML = 'Åbne opgaver nær Trøjborg';
+    }
+  }
+
+  if (state.activeCategory && state.activeCategory !== 'Alle') {
+    elements.resultText.textContent = `${tasks.length} opgave(r) i ${state.activeCategory}`;
+  } else {
+    elements.resultText.textContent = `${tasks.length} vist`;
+  }
+
   elements.openCount.textContent = state.tasks.length;
   elements.bidCount.textContent = state.tasks.reduce((total, task) => total + task.bids.length, 0);
 
@@ -476,7 +511,7 @@ function renderTasks() {
   }
 
   if (!tasks.length) {
-    elements.taskList.innerHTML = '<div class="empty-state">Ingen opgaver matcher søgningen lige nu.</div>';
+    elements.taskList.innerHTML = `<div class="empty-state">Ingen opgaver matcher ${state.activeCategory !== 'Alle' ? 'kategorien "' + escapeHtml(state.activeCategory) + '"' : 'søgningen'} lige nu.</div>`;
     return;
   }
 

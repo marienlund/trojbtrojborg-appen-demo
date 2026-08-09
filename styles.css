@@ -251,11 +251,27 @@ main {
 }
 
 /* Swipable Filter Chips Bar */
+.filters-scroll-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  padding: 4px 0;
+  scrollbar-width: none; /* Firefox */
+  touch-action: pan-x;
+}
+
+.filters-scroll-wrap::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
 .filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
-  justify-content: flex-end;
+  width: max-content;
+  align-items: center;
 }
 
 .filter-button,
@@ -273,18 +289,47 @@ main {
 }
 
 .filter-button {
-  padding: 0 14px;
+  scroll-snap-align: start;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0 16px;
   background: var(--surface);
   border-color: var(--line);
   color: var(--ink);
-  white-space: nowrap;
-  transition: all 0.15s ease;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.filter-button:hover,
+.filter-button:active {
+  border-color: var(--green);
 }
 
 .filter-button.active {
-  background: #e3efe9;
-  border-color: #a7c6bb;
+  background: var(--green);
+  border-color: var(--green-dark);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(47, 117, 102, 0.3);
+}
+
+.category-pop-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--mint);
   color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 800;
+  border: 1px solid #a7c6bb;
+  animation: popIn 0.3s ease-out forwards;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .primary {
