@@ -132,6 +132,7 @@
         <h2>Spørgsmål eller feedback?</h2>
         <p>Skriv til os, hvis du har idéer, spørgsmål eller vil hjælpe med at gøre Trøjborg-appen bedre.</p>
         <div class="contact-actions">
+          <button class="primary open-email-button" type="button" data-subject="Spørgsmål eller feedback">✉️ Skriv en mail</button>
           <a href="/cdn-cgi/l/email-protection#23484c4d574248576357514c49414c5144425353464d0d4748"><span class="__cf_email__" data-cfemail="a1cacecfd5c0cad5e1d5d3cecbc3ced3c6c0d1d1c4cf8fc5ca">[email&#160;protected]</span></a>
           <button class="copy-email" type="button" data-copy-email="kontakt@trojborgappen.dk">Kopier mailadresse</button>
         </div>
@@ -140,7 +141,8 @@
         <h3>Vil du nå lokale folk på Trøjborg?</h3>
         <p>Vi åbner for få relevante lokale sponsorer, der passer til området og appens formål.</p>
         <div class="contact-actions">
-          <a href="/cdn-cgi/l/email-protection#d0bbbfbea4b1bba490a4a2bfbab2bfa2b7b1a0a0b5befeb4bbefa3a5b2bab5b3a4ed83a0bfbea3bfa2a0bcb1b4a3f5e2e0b9f5e2e084a2f593e3f592e8bab2bfa2b7fdb1a0a0b5be">Skriv om sponsorplads</a>
+          <button class="secondary open-email-button" type="button" data-subject="Sponsorplads på Trøjborg-appen">✉️ Skriv om sponsorplads</button>
+          <a href="/cdn-cgi/l/email-protection#d0bbbfbea4b1bba490a4a2bfbab2bfa2b7b1a0a0b5befeb4bbefa3a5b2bab5b3a4ed83a0bfbea3bfa2a0bcb1b4a3f5e2e0b9f5e2e084a2f593e3f592e8bab2bfa2b7fdb1a0a0b5be">kontakt@trojborgappen.dk</a>
           <button class="copy-email" type="button" data-copy-email="kontakt@trojborgappen.dk">Kopier mailadresse</button>
         </div>
       </div>
@@ -150,6 +152,37 @@
       <a href="privacy.html" style="color:#666;">Privatlivspolitik</a> · © 2026 Trojborgappen
     </footer>
   </main>
+
+  <dialog id="emailDialog">
+    <form method="dialog" class="dialog-form" id="emailForm">
+      <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
+      <h2>Skriv en mail til os</h2>
+      <p>Har du spørgsmål, idéer eller ønsker du at høre mere om Trøjborg-appen? Skriv din besked herunder.</p>
+      <label for="emailSenderName">
+        Dit navn
+        <input id="emailSenderName" name="name" autocomplete="name" required placeholder="Skriv dit navn">
+      </label>
+      <label for="emailSenderAddress">
+        Din email
+        <input id="emailSenderAddress" name="email" type="email" autocomplete="email" required placeholder="din@email.dk">
+      </label>
+      <label for="emailSubject">
+        Emne
+        <select id="emailSubject" name="subject" required>
+          <option value="Spørgsmål eller feedback">Spørgsmål eller feedback</option>
+          <option value="Forslag til forbedringer">Forslag til forbedringer</option>
+          <option value="Sponsorplads på Trøjborg-appen">Sponsorplads på Trøjborg-appen</option>
+          <option value="Andet">Andet</option>
+        </select>
+      </label>
+      <label for="emailMessage">
+        Besked
+        <textarea id="emailMessage" name="message" rows="5" required placeholder="Skriv din besked her..."></textarea>
+      </label>
+      <button class="primary full" type="submit">Send mail</button>
+      <p class="interest-status" id="emailStatus" role="status" style="margin-top:4px;"></p>
+    </form>
+  </dialog>
 
   <dialog id="authDialog">
     <form method="dialog" class="dialog-form" id="authForm">

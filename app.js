@@ -43,7 +43,14 @@ const elements = {
   bidForm: document.querySelector('#bidForm'),
   bidTaskTitle: document.querySelector('#bidTaskTitle'),
   heroTaskButton: document.querySelector('#heroTaskButton'),
-  toastContainer: document.querySelector('#toastContainer')
+  toastContainer: document.querySelector('#toastContainer'),
+  emailDialog: document.querySelector('#emailDialog'),
+  emailForm: document.querySelector('#emailForm'),
+  emailSenderName: document.querySelector('#emailSenderName'),
+  emailSenderAddress: document.querySelector('#emailSenderAddress'),
+  emailSubject: document.querySelector('#emailSubject'),
+  emailMessage: document.querySelector('#emailMessage'),
+  emailStatus: document.querySelector('#emailStatus')
 };
 
 // ─── localStorage helpers ───
@@ -784,6 +791,79 @@ elements.bidForm.addEventListener('submit', async event => {
   submitButton.disabled = false;
   submitButton.textContent = 'Send bud';
 });
+
+// ─── E-mail Pop-up Modal Event Handlers ───
+
+document.querySelectorAll('.open-email-button').forEach(button => {
+  button.addEventListener('click', () => {
+    if (state.user) {
+      if (elements.emailSenderName) elements.emailSenderName.value = state.user.name || '';
+      if (elements.emailSenderAddress) elements.emailSenderAddress.value = state.user.email || '';
+    }
+    if (button.dataset.subject && elements.emailSubject) {
+      elements.emailSubject.value = button.dataset.subject;
+    }
+    if (elements.emailStatus) {
+      elements.emailStatus.textContent = '';
+      elements.emailStatus.classList.remove('is-error');
+    }
+    if (elements.emailDialog) {
+      elements.emailDialog.showModal();
+    }
+  });
+});
+
+if (elements.emailForm) {
+  elements.emailForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const submitButton = elements.emailForm.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Sender...';
+
+    const name = elements.emailSenderName ? elements.emailSenderName.value.trim() : '';
+    const email = elements.emailSenderAddress ? elements.emailSenderAddress.value.trim() : '';
+    const subject = elements.emailSubject ? elements.emailSubject.value : 'Spørgsmål eller feedback';
+    const message = elements.emailMessage ? elements.emailMessage.value.trim() : '';
+
+    const payload = {
+      type: 'contact',
+      name: name,
+      email: email,
+      subject: subject,
+      message: message,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      if (sharedEndpoint) {
+        await fetch(sharedEndpoint, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+      }
+      if (elements.emailStatus) {
+        elements.emailStatus.textContent = 'Tak for din besked! Din mail er sendt.';
+        elements.emailStatus.classList.remove('is-error');
+      }
+      elements.emailForm.reset();
+
+      setTimeout(() => {
+        if (elements.emailDialog) elements.emailDialog.close();
+        if (elements.emailStatus) elements.emailStatus.textContent = '';
+      }, 2000);
+    } catch (error) {
+      console.warn('Kunne ikke sende via server, åbner mailprogram:', error);
+      const mailtoUrl = `mailto:kontakt@trojborgappen.dk?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent('Fra: ' + name + ' (' + email + ')\n\n' + message)}`;
+      window.location.href = mailtoUrl;
+      if (elements.emailDialog) elements.emailDialog.close();
+    }
+
+    submitButton.disabled = false;
+    submitButton.textContent = 'Send mail';
+  });
+}
 
 // ─── Init ───
 
