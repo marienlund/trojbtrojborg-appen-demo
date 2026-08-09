@@ -1,6 +1,6 @@
 const ADMIN_EMAIL = "jensenhp79@gmail.com";
 
-const sharedEndpoint = "https://script.google.com/macros/s/AKfycbz36C45zDnNnyYz6ZpzTj5oAtmlfOCHN3S2z9Fv78A2w4hxBtnbOs9EyPu4hLncmbBK/exec";
+const sharedEndpoint = window.TROJBORG_INTEREST_ENDPOINT || "https://script.google.com/macros/s/AKfycbz36C45zDnNnyYz6ZpzTj5oAtmlfOCHN3S2z9Fv78A2w4hxBtnbOs9EyPu4hLncmbBK/exec";
 
 const SUPABASE_URL = "https://sgrwqwhisjbwjyduarat.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OTE2k2Ch4Rczfg8V29gfMA_8mxmgvQr";
