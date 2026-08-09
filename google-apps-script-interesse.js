@@ -1,4 +1,4 @@
-const SPREADSHEET_ID = "1nEwBvy2xW5ZXrGuEX_sqNwGlREMMzSOCnLa83Lp-gbo";
+const SPREADSHEET_ID = "1nEwBvy2xW5ZXrGuEX_sqNwGIREMMzSOCnLa83Lp-gbo";
 const SHEET_NAME = "Interesseliste";
 const NOTIFY_EMAIL = "jensenhp79@gmail.com, hpj8260@yahoo.dk";
 
