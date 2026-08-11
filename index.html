@@ -5,10 +5,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Trøjborg-appen</title>
-  <link rel="stylesheet" href="styles.css?v=20260811-03">
-  <link rel="stylesheet" href="contact.css?v=20260811-03">
-  <link rel="stylesheet" href="interest.css?v=20260811-03">
-  <link rel="stylesheet" href="notifications.css?v=20260811-03">
+  <link rel="stylesheet" href="styles.css?v=20260811-05">
+  <link rel="stylesheet" href="contact.css?v=20260811-05">
+  <link rel="stylesheet" href="interest.css?v=20260811-05">
+  <link rel="stylesheet" href="notifications.css?v=20260811-05">
 </head>
 <body>
   <header class="app-header">
@@ -272,8 +272,9 @@
     </form>
   </dialog>
 
-  <dialog id="guideDialog" class="guide-dialog">
-    <div class="dialog-form guide-dialog-form">
+  <!-- VEJLEDNING MODAL (BULLETPROOF FIXED OVERLAY TOP POSITION) -->
+  <div id="guideDialog" class="custom-guide-modal-overlay hidden">
+    <div class="custom-guide-modal-box">
       <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
       <h2 data-i18n="guide_title">📖 Vejledning</h2>
       <p data-i18n="guide_subtitle" style="color:var(--muted);font-size:14px;margin-bottom:8px;">Få samlet overblik over hvordan du bruger Trøjborg-appen og opretter opgaver.</p>
@@ -309,15 +310,15 @@
         </div>
       </div>
     </div>
-  </dialog>
+  </div>
 
   <!-- Toast-container til notifikationer -->
   <div id="toastContainer" class="toast-container" role="alert" aria-live="polite"></div>
 
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="interest-config.js?v=20260811-03"></script>
-  <script src="app.js?v=20260811-03"></script>
-  <script src="interest.js?v=20260811-03"></script>
+  <script src="interest-config.js?v=20260811-05"></script>
+  <script src="app.js?v=20260811-05"></script>
+  <script src="interest.js?v=20260811-05"></script>
 </body>
 </html>

@@ -905,7 +905,11 @@ elements.heroTaskButton.addEventListener('click', () => {
 document.querySelectorAll('.open-guide-btn').forEach(button => {
   button.addEventListener('click', () => {
     if (elements.guideDialog) {
-      elements.guideDialog.showModal();
+      if (typeof elements.guideDialog.showModal === 'function' && elements.guideDialog.tagName === 'DIALOG') {
+        elements.guideDialog.showModal();
+      } else {
+        elements.guideDialog.classList.remove('hidden');
+      }
     }
   });
 });
@@ -934,9 +938,25 @@ document.querySelectorAll('.guide-tab').forEach(tabBtn => {
 
 document.querySelectorAll('.close-dialog').forEach(button => {
   button.addEventListener('click', event => {
-    event.target.closest('dialog').close();
+    const dialog = event.target.closest('dialog') || event.target.closest('.custom-guide-modal-overlay');
+    if (dialog) {
+      if (dialog.tagName === 'DIALOG' && typeof dialog.close === 'function') {
+        dialog.close();
+      } else {
+        dialog.classList.add('hidden');
+      }
+    }
   });
 });
+
+const guideDialogEl = document.getElementById('guideDialog');
+if (guideDialogEl) {
+  guideDialogEl.addEventListener('click', (e) => {
+    if (e.target === guideDialogEl) {
+      guideDialogEl.classList.add('hidden');
+    }
+  });
+}
 
 document.querySelectorAll('[data-copy-email]').forEach(button => {
   button.addEventListener('click', async () => {
