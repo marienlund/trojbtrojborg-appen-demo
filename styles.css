@@ -599,22 +599,26 @@ main {
 }
 
 /* ─── MODALS / DIALOGS ─── */
-dialog {
-  position: fixed;
-  top: 5%;
-  top: 5dvh;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  width: min(680px, calc(100% - 24px));
-  max-height: min(85vh, calc(100dvh - 32px));
-  padding: 0;
-  border: 0;
-  border-radius: 16px;
-  box-shadow: var(--shadow);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+dialog,
+dialog[open],
+dialog:modal {
+  position: fixed !important;
+  inset: 5% auto auto 50% !important;
+  top: 5% !important;
+  top: 5dvh !important;
+  bottom: auto !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  margin: 0 !important;
+  width: min(680px, calc(100% - 24px)) !important;
+  max-height: min(85vh, calc(100dvh - 32px)) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: var(--shadow) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
 }
 
 dialog::backdrop {
@@ -874,8 +878,11 @@ dialog::backdrop {
   }
 
   /* Position pop-up modal high up near the top of mobile screens */
-  dialog {
+  dialog,
+  dialog[open],
+  dialog:modal {
     position: fixed !important;
+    inset: 4% auto auto 50% !important;
     top: 4% !important;
     top: 4dvh !important;
     bottom: auto !important;
