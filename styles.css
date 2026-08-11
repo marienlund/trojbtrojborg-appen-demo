@@ -934,11 +934,17 @@ dialog::backdrop {
   border: 1px solid var(--line, #e2e8f0);
   background: #f8faf9;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .guide-img {
   width: 100%;
   height: auto;
+  max-height: 55vh;
+  object-fit: contain;
   display: block;
   border-radius: 12px;
 }
