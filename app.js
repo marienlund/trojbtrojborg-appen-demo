@@ -98,7 +98,13 @@ const i18n = {
     latest_bids: 'Seneste bud',
     no_bids: 'Ingen bud endnu.',
     bid_btn: 'Byd ind',
-    delete_btn: 'Slet'
+    delete_btn: 'Slet',
+    guide_btn: '📖 Vejledning',
+    guide_title: '📖 Vejledning til Trøjborg-appen',
+    guide_subtitle: 'Få samlet overblik over hvordan du bruger Trøjborg-appen og opretter opgaver.',
+    tab_webapp: '📱 Webapp på telefon',
+    tab_task: '📝 Opret opgave',
+    open_full_img: '🔍 Åbn billedet i fuld størrelse'
   },
   en: {
     tagline: 'Small local tasks. Quick offers. Local neighbors.',
@@ -150,7 +156,13 @@ const i18n = {
     latest_bids: 'Latest offers',
     no_bids: 'No offers yet.',
     bid_btn: 'Make offer',
-    delete_btn: 'Delete'
+    delete_btn: 'Delete',
+    guide_btn: '📖 Guide',
+    guide_title: '📖 Guide to Trøjborg-appen',
+    guide_subtitle: 'Get an overview of how to use Trøjborg-appen and post tasks.',
+    tab_webapp: '📱 Webapp on phone',
+    tab_task: '📝 Post a task',
+    open_full_img: '🔍 Open full size image'
   }
 };
 
@@ -179,7 +191,8 @@ const elements = {
   emailSenderAddress: document.querySelector('#emailSenderAddress'),
   emailSubject: document.querySelector('#emailSubject'),
   emailMessage: document.querySelector('#emailMessage'),
-  emailStatus: document.querySelector('#emailStatus')
+  emailStatus: document.querySelector('#emailStatus'),
+  guideDialog: document.querySelector('#guideDialog')
 };
 
 // ─── localStorage helpers ───
@@ -887,6 +900,36 @@ elements.openTaskButton.addEventListener('click', () => {
 
 elements.heroTaskButton.addEventListener('click', () => {
   if (ensureUser()) elements.taskDialog.showModal();
+});
+
+document.querySelectorAll('.open-guide-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    if (elements.guideDialog) {
+      elements.guideDialog.showModal();
+    }
+  });
+});
+
+document.querySelectorAll('.guide-tab').forEach(tabBtn => {
+  tabBtn.addEventListener('click', () => {
+    const targetTab = tabBtn.dataset.tab;
+    document.querySelectorAll('.guide-tab').forEach(b => {
+      const isActive = b.dataset.tab === targetTab;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    const webappPanel = document.querySelector('#guidePanelWebapp');
+    const taskPanel = document.querySelector('#guidePanelTask');
+    if (webappPanel && taskPanel) {
+      if (targetTab === 'webapp') {
+        webappPanel.style.display = 'block';
+        taskPanel.style.display = 'none';
+      } else {
+        webappPanel.style.display = 'none';
+        taskPanel.style.display = 'block';
+      }
+    }
+  });
 });
 
 document.querySelectorAll('.close-dialog').forEach(button => {

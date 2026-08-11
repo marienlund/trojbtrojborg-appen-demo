@@ -889,3 +889,85 @@ dialog::backdrop {
     -webkit-overflow-scrolling: touch !important;
   }
 }
+
+/* ─── VEJLEDNING / GUIDE MODAL ─── */
+.guide-dialog {
+  width: min(720px, calc(100% - 24px));
+}
+
+.guide-tabs {
+  display: flex;
+  gap: 8px;
+  background: #edf2ee;
+  padding: 6px;
+  border-radius: 12px;
+  margin: 6px 0 14px 0;
+}
+
+.guide-tab {
+  flex: 1;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.guide-tab:hover {
+  background: rgba(20, 83, 45, 0.08);
+}
+
+.guide-tab.active {
+  background: var(--green, #14532d);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(20, 83, 45, 0.25);
+}
+
+.guide-img-container {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line, #e2e8f0);
+  background: #f8faf9;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.guide-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.guide-footer-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.guide-zoom-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f4f7f4;
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 8px;
+  color: var(--green, #14532d);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.guide-zoom-link:hover {
+  background: #e5ede7;
+}
+
+.open-guide-btn {
+  white-space: nowrap;
+}
