@@ -600,8 +600,14 @@ main {
 
 /* ─── MODALS / DIALOGS ─── */
 dialog {
-  width: min(560px, calc(100% - 28px));
-  max-height: min(90vh, calc(100dvh - 32px));
+  position: fixed;
+  top: 5%;
+  top: 5dvh;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  width: min(680px, calc(100% - 24px));
+  max-height: min(85vh, calc(100dvh - 32px));
   padding: 0;
   border: 0;
   border-radius: 16px;
@@ -867,17 +873,23 @@ dialog::backdrop {
     padding: 12px 14px;
   }
 
-  /* Centered floating pop-up modal styling for mobile screens */
+  /* Position pop-up modal high up near the top of mobile screens */
   dialog {
+    position: fixed !important;
+    top: 4% !important;
+    top: 4dvh !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin: 0 !important;
     width: calc(100% - 24px) !important;
     max-width: 680px !important;
-    margin: auto !important;
     border-radius: 20px !important;
-    max-height: 84vh !important;
-    max-height: 84dvh !important;
+    max-height: 88vh !important;
+    max-height: 88dvh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
   }
 
   .dialog-form {
