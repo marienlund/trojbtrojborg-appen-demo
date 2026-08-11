@@ -970,4 +970,21 @@ dialog::backdrop {
 
 .open-guide-btn {
   white-space: nowrap;
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+  transition: all 0.2s ease !important;
+}
+
+.open-guide-btn:hover {
+  background: #b91c1c !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+.open-guide-btn:active {
+  transform: translateY(0);
 }
