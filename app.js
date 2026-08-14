@@ -587,16 +587,18 @@ function scrollToTask(taskId) {
 
 function openModal(dialogEl) {
   if (!dialogEl) return;
+  dialogEl.classList.remove('hidden');
+  dialogEl.setAttribute('open', '');
+  dialogEl.style.display = 'block';
+  dialogEl.style.zIndex = '999999';
+
   if (typeof dialogEl.showModal === 'function') {
     try {
       dialogEl.showModal();
-      return;
     } catch (e) {
-      console.warn('showModal fallback:', e);
+      console.warn('showModal fallback used:', e);
     }
   }
-  dialogEl.setAttribute('open', '');
-  dialogEl.style.display = 'block';
 }
 
 function closeModal(dialogEl) {
@@ -1348,6 +1350,24 @@ if (enableNotifBtn) {
     }
   });
 }
+
+// ─── Global Event Delegation for Mobile Touch ───
+
+document.addEventListener('click', (e) => {
+  const bidBtn = e.target.closest('.bid-button');
+  if (bidBtn) {
+    e.preventDefault();
+    const taskId = bidBtn.dataset.taskId;
+    state.activeBidTask = state.tasks.find(t => String(t.id) === String(taskId));
+    
+    if (!ensureUser()) return;
+
+    if (state.activeBidTask && elements.bidDialog) {
+      if (elements.bidTaskTitle) elements.bidTaskTitle.textContent = state.activeBidTask.title;
+      openModal(elements.bidDialog);
+    }
+  }
+});
 
 // ─── Init ───
 
