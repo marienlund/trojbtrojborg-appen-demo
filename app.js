@@ -616,7 +616,17 @@ function ensureUser() {
     return true;
   }
   openModal(elements.authDialog);
-  showSimpleToast('Opret profil først for at sende bud');
+  const nameInput = document.querySelector('#nameInput');
+  if (nameInput) nameInput.focus();
+
+  showSimpleToast(
+    '👤 <strong>Opret profil først</strong> for at sende bud. <span style="text-decoration:underline;margin-left:6px;font-weight:700;">Tryk her for at oprette ➔</span>',
+    6000,
+    () => {
+      openModal(elements.authDialog);
+      if (nameInput) nameInput.focus();
+    }
+  );
   return false;
 }
 
@@ -905,10 +915,17 @@ async function sendTaskToSharedList(task) {
 
 // ─── Toast notification ───
 
-function showSimpleToast(message, duration = 4000) {
+function showSimpleToast(message, duration = 5000, onClick = null) {
   const toast = document.createElement('div');
   toast.className = 'toast-notification';
-  toast.textContent = message;
+  toast.innerHTML = message;
+  if (typeof onClick === 'function') {
+    toast.style.cursor = 'pointer';
+    toast.addEventListener('click', () => {
+      onClick();
+      toast.remove();
+    });
+  }
   document.body.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add('visible'));
   setTimeout(() => {
