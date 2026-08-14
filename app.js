@@ -1014,8 +1014,8 @@ document.addEventListener('click', (e) => {
 function render() {
   renderAccount();
   renderFilters();
-  renderTasks();
   checkUnreadNotificationBadge();
+  renderTasks();
 }
 
 function escapeHtml(value) {

@@ -166,7 +166,7 @@
 
 /* ===== Rød notifikations-prik & badge ===== */
 .red-notification-dot {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   gap: 4px;
   background-color: #ef4444;
