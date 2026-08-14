@@ -1,0 +1,18 @@
+{
+  "name": "Trøjborg-appen",
+  "short_name": "TrøjborgApp",
+  "description": "Lokalt opgavemarked & nabohjælp på Trøjborg i Aarhus N.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#14532d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/neighborhood.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

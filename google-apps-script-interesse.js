@@ -18,6 +18,10 @@ function doPost(e) {
     return saveContact(data);
   }
 
+  if (data.type === "notification") {
+    return sendNotification(data);
+  }
+
   const sheet = getOrCreateSheet(SHEET_NAME, ["Tidspunkt", "Email", "Interesser"]);
   const email = data.email || "";
   const categories = Array.isArray(data.categories) ? data.categories.join(", ") : "";
@@ -38,6 +42,47 @@ function doPost(e) {
       ].join("\n")
     });
   } catch (err) {}
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function sendNotification(data) {
+  const recipient = data.subscriberEmail;
+  if (!recipient) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: "Missing subscriberEmail" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const subject = `Ny opgave på Trøjborg-appen: ${data.taskTitle || "Ny opgave"}`;
+  const body = [
+    `Hej!`,
+    ``,
+    `Der er lige oprettet en ny opgave på Trøjborg-appen i kategorien "${data.taskCategory}", som du har tilmeldt dig interesse for:`,
+    ``,
+    `📌 Titel: ${data.taskTitle}`,
+    `🏷️ Kategori: ${data.taskCategory}`,
+    `📍 Område: ${data.taskArea || 'Trøjborg'}`,
+    `💰 Budget: ${data.taskBudget || 'Ikke angivet'}`,
+    `👤 Oprettet af: ${data.taskOwner || 'En nabo'}`,
+    ``,
+    `Se opgaven og byd ind på: https://trojborgappen.dk`,
+    ``,
+    `Venlig hilsen`,
+    `Trøjborg-appen`
+  ].join("\n");
+
+  try {
+    MailApp.sendEmail({
+      to: recipient,
+      subject: subject,
+      body: body
+    });
+  } catch (err) {
+    Logger.log("Fejl ved afsendelse af notifikation: " + err);
+  }
 
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true }))
