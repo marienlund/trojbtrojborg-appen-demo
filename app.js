@@ -932,30 +932,28 @@ function getUserCategories() {
   try {
     const saved = JSON.parse(localStorage.getItem('trojborg-interest-signups') || '[]');
     if (Array.isArray(saved) && saved.length > 0) {
-      return saved[saved.length - 1].categories || [];
+      const cats = saved[saved.length - 1].categories;
+      if (Array.isArray(cats) && cats.length > 0) {
+        return cats;
+      }
     }
   } catch (e) {}
-  return [];
+  return ['Have og gård', 'Indkøb', 'Reparationer', 'Dyr', 'Børn', 'Andet'];
 }
 
 function checkUnreadNotificationBadge() {
   const userCategories = getUserCategories();
-  if (!userCategories.length || !state.tasks || !state.tasks.length) {
+  if (!state.tasks || !state.tasks.length) {
     updateRedDotBadge(false);
     return;
   }
 
-  let lastSeen = localStorage.getItem('trojborg-last-seen-timestamp');
-  if (!lastSeen) {
-    localStorage.setItem('trojborg-last-seen-timestamp', Date.now().toString());
-    updateRedDotBadge(false);
-    return;
-  }
+  const lastSeenStr = localStorage.getItem('trojborg-last-seen-timestamp');
+  const lastSeenMs = lastSeenStr ? parseInt(lastSeenStr, 10) : (Date.now() - 24 * 60 * 60 * 1000);
 
-  const lastSeenMs = parseInt(lastSeen, 10);
   const hasUnread = state.tasks.some(task => {
     if (!userCategories.includes(task.category)) return false;
-    const taskTime = task.createdAt ? new Date(task.createdAt).getTime() : 0;
+    const taskTime = task.createdAt ? new Date(task.createdAt).getTime() : Date.now();
     return taskTime > lastSeenMs;
   });
 
