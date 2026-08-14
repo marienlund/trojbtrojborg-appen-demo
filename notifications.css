@@ -164,18 +164,23 @@
   margin-top: 4px;
 }
 
-/* ===== Rød notifikations-prik ===== */
+/* ===== Rød notifikations-prik & badge ===== */
 .red-notification-dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background-color: #ef4444;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 10px rgba(239, 68, 68, 0.7);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 12px rgba(239, 68, 68, 0.8);
   animation: pulse-dot 2s infinite;
-  margin-left: 6px;
+  margin-left: 8px;
   vertical-align: middle;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .red-notification-dot.hidden {
@@ -183,7 +188,7 @@
 }
 
 @keyframes pulse-dot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1.15); box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+  70% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }

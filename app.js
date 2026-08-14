@@ -711,7 +711,9 @@ function renderTasks() {
   const boardHeadTitle = document.querySelector('.board-head h2');
   if (boardHeadTitle) {
     const isHidden = !state.hasUnreadBadge;
-    const dotHtml = `<span class="red-notification-dot ${isHidden ? 'hidden' : ''}" id="tasksNotificationDot" title="Nye opgaver i dine kategorier"></span>`;
+    const count = state.unreadCount || 1;
+    const badgeText = count > 0 ? `${count} ny${count > 1 ? 'e' : ''}` : 'Ny';
+    const dotHtml = `<span class="red-notification-dot ${isHidden ? 'hidden' : ''}" id="tasksNotificationDot" title="Nye opgaver i dine kategorier">${badgeText}</span>`;
     if (state.activeCategory && state.activeCategory !== 'Alle') {
       const icon = categoryIcons[state.activeCategory] || '🏷️';
       const catLabel = catMap[state.activeCategory] || state.activeCategory;
@@ -955,30 +957,37 @@ function getSeenTaskIds() {
 function checkUnreadNotificationBadge() {
   const userCategories = getUserCategories();
   if (!state.tasks || !state.tasks.length) {
-    updateRedDotBadge(false);
+    updateRedDotBadge(false, 0);
     return;
   }
 
   const seenIds = getSeenTaskIds();
 
-  // En opgave tæller som ulæst hvis dens kategori matcher brugerens interesser, og dens ID ikke er set endnu
   const unreadTasks = state.tasks.filter(task => {
     if (!userCategories.includes(task.category)) return false;
+    if (seenIds.length === 0) {
+      const taskTime = task.createdAt ? new Date(task.createdAt).getTime() : Date.now();
+      return (Date.now() - taskTime) < (48 * 60 * 60 * 1000);
+    }
     return !seenIds.includes(String(task.id));
   });
 
-  updateRedDotBadge(unreadTasks.length > 0);
+  updateRedDotBadge(unreadTasks.length > 0, unreadTasks.length);
 }
 
-function updateRedDotBadge(show) {
+function updateRedDotBadge(show, count = 1) {
   state.hasUnreadBadge = Boolean(show);
+  state.unreadCount = count;
+
   document.querySelectorAll('.red-notification-dot').forEach(dot => {
     dot.classList.toggle('hidden', !show);
+    const badgeText = count > 0 ? `${count} ny${count > 1 ? 'e' : ''}` : 'Ny';
+    dot.textContent = badgeText;
   });
 
   if (show) {
     if ('setAppBadge' in navigator) {
-      navigator.setAppBadge(1).catch(() => {});
+      navigator.setAppBadge(count || 1).catch(() => {});
     }
   } else {
     if ('clearAppBadge' in navigator) {
