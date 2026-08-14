@@ -1164,8 +1164,14 @@ elements.authForm.addEventListener('submit', event => {
     phone: document.querySelector('#phoneInput').value.trim()
   };
   writeLocal('trojborg-user', state.user);
-  elements.authDialog.close();
+  closeModal(elements.authDialog);
   renderAccount();
+  showSimpleToast(`✅ Profil gemt for ${state.user.name}`);
+
+  if (state.activeBidTask && elements.bidDialog) {
+    if (elements.bidTaskTitle) elements.bidTaskTitle.textContent = state.activeBidTask.title;
+    openModal(elements.bidDialog);
+  }
 });
 
 elements.taskForm.addEventListener('submit', async event => {

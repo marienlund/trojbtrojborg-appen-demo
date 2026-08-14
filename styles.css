@@ -603,25 +603,25 @@ dialog,
 dialog[open],
 dialog:modal {
   position: fixed !important;
-  inset: 5% auto auto 50% !important;
-  top: 5% !important;
-  top: 5dvh !important;
-  bottom: auto !important;
+  top: 50% !important;
   left: 50% !important;
-  transform: translateX(-50%) !important;
+  transform: translate(-50%, -50%) !important;
   margin: 0 !important;
-  width: min(680px, calc(100% - 24px)) !important;
-  max-height: min(85vh, calc(100dvh - 32px)) !important;
+  width: min(580px, calc(100vw - 24px)) !important;
+  max-width: calc(100vw - 24px) !important;
+  min-height: 240px !important;
+  max-height: min(88vh, 88dvh) !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 16px !important;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.35) !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
   background: #ffffff !important;
   color: #1d2939 !important;
   z-index: 999999 !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
 }
 
 dialog:not([open]) {
@@ -884,26 +884,25 @@ dialog::backdrop {
     padding: 12px 14px;
   }
 
-  /* Position pop-up modal high up near the top of mobile screens */
+  /* Position pop-up modal centered on mobile screens */
   dialog,
   dialog[open],
   dialog:modal {
     position: fixed !important;
-    inset: 4% auto auto 50% !important;
-    top: 4% !important;
-    top: 4dvh !important;
-    bottom: auto !important;
+    top: 50% !important;
     left: 50% !important;
-    transform: translateX(-50%) !important;
+    transform: translate(-50%, -50%) !important;
     margin: 0 !important;
-    width: calc(100% - 24px) !important;
-    max-width: 680px !important;
+    width: calc(100vw - 24px) !important;
+    max-width: 580px !important;
+    min-height: 240px !important;
+    max-height: calc(100dvh - 32px) !important;
     border-radius: 20px !important;
-    max-height: 88vh !important;
-    max-height: 88dvh !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    background: #ffffff !important;
+    z-index: 999999 !important;
   }
 
   .dialog-form {
