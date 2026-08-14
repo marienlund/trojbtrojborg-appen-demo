@@ -845,13 +845,19 @@ async function notifySubscribers(task) {
       .select('email, categories')
       .contains('categories', [task.category]);
 
-    if (error || !subs || subs.length === 0) return;
+    if (error) {
+      console.warn('Fejl ved søgning i Supabase subscriptions:', error);
+      return;
+    }
 
-    const ownerEmail = state.user?.email || '';
-    const matches = subs.filter(s => s.email !== ownerEmail);
-    if (matches.length === 0) return;
+    if (!subs || subs.length === 0) {
+      console.log(`Ingen abonnenter fundet for kategorien "${task.category}"`);
+      return;
+    }
 
-    for (const sub of matches) {
+    // Send e-mail notifikation til alle abonnenter i denne kategori
+    for (const sub of subs) {
+      if (!sub.email) continue;
       fetch(sharedEndpoint, {
         method: 'POST',
         mode: 'no-cors',
@@ -865,10 +871,10 @@ async function notifySubscribers(task) {
           taskBudget: task.budget || 'Ikke angivet',
           taskOwner: task.owner
         })
-      }).catch(() => {});
+      }).catch(err => console.warn('Notifikations-fejl for', sub.email, err));
     }
 
-    showSimpleToast(`${matches.length} interesserede i "${task.category}" notificeret`);
+    showSimpleToast(`Notifikation sendt til ${subs.length} interesserede i "${task.category}"`);
   } catch (err) {
     console.warn('Notifikation fejlede:', err);
   }
