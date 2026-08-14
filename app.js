@@ -710,12 +710,14 @@ function renderTasks() {
   
   const boardHeadTitle = document.querySelector('.board-head h2');
   if (boardHeadTitle) {
+    const isHidden = !state.hasUnreadBadge;
+    const dotHtml = `<span class="red-notification-dot ${isHidden ? 'hidden' : ''}" id="tasksNotificationDot" title="Nye opgaver i dine kategorier"></span>`;
     if (state.activeCategory && state.activeCategory !== 'Alle') {
       const icon = categoryIcons[state.activeCategory] || '🏷️';
       const catLabel = catMap[state.activeCategory] || state.activeCategory;
-      boardHeadTitle.innerHTML = `${t.open_tasks_prefix} <span class="category-pop-header">${icon} ${escapeHtml(catLabel)}</span>`;
+      boardHeadTitle.innerHTML = `${t.open_tasks_prefix} <span class="category-pop-header">${icon} ${escapeHtml(catLabel)}</span> ${dotHtml}`;
     } else {
-      boardHeadTitle.innerHTML = t.open_tasks_title;
+      boardHeadTitle.innerHTML = `${t.open_tasks_title} ${dotHtml}`;
     }
   }
 
@@ -969,6 +971,7 @@ function checkUnreadNotificationBadge() {
 }
 
 function updateRedDotBadge(show) {
+  state.hasUnreadBadge = Boolean(show);
   document.querySelectorAll('.red-notification-dot').forEach(dot => {
     dot.classList.toggle('hidden', !show);
   });
