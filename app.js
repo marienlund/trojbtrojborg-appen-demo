@@ -941,6 +941,15 @@ function getUserCategories() {
   return ['Have og gård', 'Indkøb', 'Reparationer', 'Dyr', 'Børn', 'Andet'];
 }
 
+function getSeenTaskIds() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('trojborg-seen-task-ids') || '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch (e) {
+    return [];
+  }
+}
+
 function checkUnreadNotificationBadge() {
   const userCategories = getUserCategories();
   if (!state.tasks || !state.tasks.length) {
@@ -948,16 +957,15 @@ function checkUnreadNotificationBadge() {
     return;
   }
 
-  const lastSeenStr = localStorage.getItem('trojborg-last-seen-timestamp');
-  const lastSeenMs = lastSeenStr ? parseInt(lastSeenStr, 10) : (Date.now() - 24 * 60 * 60 * 1000);
+  const seenIds = getSeenTaskIds();
 
-  const hasUnread = state.tasks.some(task => {
+  // En opgave tæller som ulæst hvis dens kategori matcher brugerens interesser, og dens ID ikke er set endnu
+  const unreadTasks = state.tasks.filter(task => {
     if (!userCategories.includes(task.category)) return false;
-    const taskTime = task.createdAt ? new Date(task.createdAt).getTime() : Date.now();
-    return taskTime > lastSeenMs;
+    return !seenIds.includes(String(task.id));
   });
 
-  updateRedDotBadge(hasUnread);
+  updateRedDotBadge(unreadTasks.length > 0);
 }
 
 function updateRedDotBadge(show) {
@@ -977,12 +985,18 @@ function updateRedDotBadge(show) {
 }
 
 function markTasksAsRead() {
-  localStorage.setItem('trojborg-last-seen-timestamp', Date.now().toString());
+  if (!state.tasks) return;
+  const currentIds = state.tasks.map(t => String(t.id));
+  const seenIds = getSeenTaskIds();
+  const updatedSeen = Array.from(new Set([...seenIds, ...currentIds]));
+  localStorage.setItem('trojborg-seen-task-ids', JSON.stringify(updatedSeen));
   updateRedDotBadge(false);
 }
 
-document.querySelectorAll('.red-notification-dot').forEach(dot => {
-  dot.addEventListener('click', markTasksAsRead);
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.red-notification-dot')) {
+    markTasksAsRead();
+  }
 });
 
 function render() {
