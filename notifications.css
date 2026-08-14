@@ -163,3 +163,27 @@
   color: var(--muted);
   margin-top: 4px;
 }
+
+/* ===== Rød notifikations-prik ===== */
+.red-notification-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 10px rgba(239, 68, 68, 0.7);
+  animation: pulse-dot 2s infinite;
+  margin-left: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.red-notification-dot.hidden {
+  display: none !important;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}

@@ -65,7 +65,7 @@
     <div class="brand">
       <div class="brand-mark" aria-hidden="true">T</div>
       <div>
-        <h1>Trøjborg-appen</h1>
+        <h1>Trøjborg-appen <span class="red-notification-dot hidden" id="headerNotificationDot" title="Nye opgaver i dine kategorier"></span></h1>
         <p data-i18n="tagline">Små lokale opgaver. Hurtige bud. Folk fra området.</p>
       </div>
     </div>
@@ -152,7 +152,7 @@
 
       <section class="task-board" aria-live="polite">
         <div class="board-head">
-          <h2 data-i18n="open_tasks_title">Åbne opgaver nær Trøjborg</h2>
+          <h2><span data-i18n="open_tasks_title">Åbne opgaver nær Trøjborg</span> <span class="red-notification-dot hidden" id="tasksNotificationDot" title="Nye opgaver i dine kategorier"></span></h2>
           <span id="resultText"></span>
         </div>
         <div class="tasks" id="taskList"></div>

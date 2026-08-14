@@ -456,15 +456,61 @@ function setupRealtimeSubscriptions() {
 
   state.realtimeChannels.push(bidChannel);
 
-  const taskChannel = sb
-    .channel('tasks-realtime')
+  const taskUpdateChannel = sb
+    .channel('tasks-update-realtime')
     .on('postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'tasks' },
       (payload) => handleTaskUpdate(payload.new)
     )
     .subscribe();
 
-  state.realtimeChannels.push(taskChannel);
+  state.realtimeChannels.push(taskUpdateChannel);
+
+  const taskInsertChannel = sb
+    .channel('tasks-insert-realtime')
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'tasks' },
+      (payload) => handleNewTaskRealtime(payload.new)
+    )
+    .subscribe();
+
+  state.realtimeChannels.push(taskInsertChannel);
+}
+
+function handleNewTaskRealtime(newTask) {
+  if (!newTask) return;
+  const formattedTask = {
+    id: newTask.id,
+    title: newTask.title,
+    category: newTask.category,
+    area: newTask.area,
+    budget: newTask.budget,
+    time: newTask.time,
+    description: newTask.description,
+    owner: newTask.owner_name,
+    ownerEmail: newTask.owner_email,
+    ownerNote: 'Lokal bruger',
+    contact: newTask.contact,
+    createdAt: newTask.created_at,
+    awardedTo: newTask.awarded_to || null,
+    bids: []
+  };
+
+  const alreadyExists = state.tasks.some(t => t.id === formattedTask.id);
+  if (!alreadyExists) {
+    state.tasks.unshift(formattedTask);
+    render();
+
+    const userCategories = getUserCategories();
+    if (userCategories.includes(formattedTask.category)) {
+      updateRedDotBadge(true);
+      showToast(
+        'info',
+        `🔴 Ny opgave i "${formattedTask.category}"`,
+        `${formattedTask.title} (${formattedTask.area || 'Trøjborg'})`
+      );
+    }
+  }
 }
 
 function handleNewBid(newBid) {
@@ -880,10 +926,72 @@ async function notifySubscribers(task) {
   }
 }
 
+// ─── Notification Badge & Unread Logic ───
+
+function getUserCategories() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('trojborg-interest-signups') || '[]');
+    if (Array.isArray(saved) && saved.length > 0) {
+      return saved[saved.length - 1].categories || [];
+    }
+  } catch (e) {}
+  return [];
+}
+
+function checkUnreadNotificationBadge() {
+  const userCategories = getUserCategories();
+  if (!userCategories.length || !state.tasks || !state.tasks.length) {
+    updateRedDotBadge(false);
+    return;
+  }
+
+  let lastSeen = localStorage.getItem('trojborg-last-seen-timestamp');
+  if (!lastSeen) {
+    localStorage.setItem('trojborg-last-seen-timestamp', Date.now().toString());
+    updateRedDotBadge(false);
+    return;
+  }
+
+  const lastSeenMs = parseInt(lastSeen, 10);
+  const hasUnread = state.tasks.some(task => {
+    if (!userCategories.includes(task.category)) return false;
+    const taskTime = task.createdAt ? new Date(task.createdAt).getTime() : 0;
+    return taskTime > lastSeenMs;
+  });
+
+  updateRedDotBadge(hasUnread);
+}
+
+function updateRedDotBadge(show) {
+  document.querySelectorAll('.red-notification-dot').forEach(dot => {
+    dot.classList.toggle('hidden', !show);
+  });
+
+  if (show) {
+    if ('setAppBadge' in navigator) {
+      navigator.setAppBadge(1).catch(() => {});
+    }
+  } else {
+    if ('clearAppBadge' in navigator) {
+      navigator.clearAppBadge().catch(() => {});
+    }
+  }
+}
+
+function markTasksAsRead() {
+  localStorage.setItem('trojborg-last-seen-timestamp', Date.now().toString());
+  updateRedDotBadge(false);
+}
+
+document.querySelectorAll('.red-notification-dot').forEach(dot => {
+  dot.addEventListener('click', markTasksAsRead);
+});
+
 function render() {
   renderAccount();
   renderFilters();
   renderTasks();
+  checkUnreadNotificationBadge();
 }
 
 function escapeHtml(value) {
