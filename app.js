@@ -1274,6 +1274,32 @@ document.querySelectorAll('.lang-btn').forEach(btn => {
   });
 });
 
+// ─── Notification Permission Handler (iOS / Android PWA) ───
+
+const enableNotifBtn = document.querySelector('#enableNotificationsBtn');
+if (enableNotifBtn) {
+  enableNotifBtn.addEventListener('click', async () => {
+    if (!('Notification' in window)) {
+      alert('Din browser eller enhed understøtter desværre ikke web-notifikationer.');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        showSimpleToast('Notifikationer og rød notifikationsprik er nu aktiveret på din telefon!');
+        if ('setAppBadge' in navigator) {
+          navigator.setAppBadge(1).catch(() => {});
+        }
+      } else if (permission === 'denied') {
+        alert('Notifikationer er afvist. Du kan aktivere dem under Indstillinger på din iPhone.');
+      }
+    } catch (err) {
+      console.warn('Fejl ved anmodning om notifikationstilladelse:', err);
+    }
+  });
+}
+
 // ─── Init ───
 
 (async function init() {
