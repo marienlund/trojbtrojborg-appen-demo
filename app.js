@@ -1126,13 +1126,10 @@ document.querySelectorAll('.guide-tab').forEach(tabBtn => {
 
 document.querySelectorAll('.close-dialog').forEach(button => {
   button.addEventListener('click', event => {
+    event.preventDefault();
     const dialog = event.target.closest('dialog') || event.target.closest('.custom-guide-modal-overlay');
     if (dialog) {
-      if (dialog.tagName === 'DIALOG' && typeof dialog.close === 'function') {
-        dialog.close();
-      } else {
-        dialog.classList.add('hidden');
-      }
+      closeModal(dialog);
     }
   });
 });
