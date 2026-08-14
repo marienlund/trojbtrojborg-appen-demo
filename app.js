@@ -585,11 +585,38 @@ function scrollToTask(taskId) {
 
 // ─── UI helpers ───
 
+function openModal(dialogEl) {
+  if (!dialogEl) return;
+  if (typeof dialogEl.showModal === 'function') {
+    try {
+      dialogEl.showModal();
+      return;
+    } catch (e) {
+      console.warn('showModal fallback:', e);
+    }
+  }
+  dialogEl.setAttribute('open', '');
+  dialogEl.style.display = 'block';
+}
+
+function closeModal(dialogEl) {
+  if (!dialogEl) return;
+  if (typeof dialogEl.close === 'function') {
+    try {
+      dialogEl.close();
+      return;
+    } catch (e) {}
+  }
+  dialogEl.removeAttribute('open');
+  dialogEl.style.display = 'none';
+}
+
 function ensureUser() {
-  if (state.user) {
+  if (state.user && state.user.name && state.user.name.trim()) {
     return true;
   }
-  elements.authDialog.showModal();
+  openModal(elements.authDialog);
+  showSimpleToast('Opret profil først for at sende bud');
   return false;
 }
 
@@ -801,11 +828,15 @@ function renderTasks() {
   }).join('');
 
   elements.taskList.querySelectorAll('.bid-button').forEach(button => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
       if (!ensureUser()) return;
-      state.activeBidTask = state.tasks.find(task => task.id === button.dataset.taskId);
-      elements.bidTaskTitle.textContent = state.activeBidTask.title;
-      elements.bidDialog.showModal();
+      const taskId = button.dataset.taskId;
+      state.activeBidTask = state.tasks.find(task => String(task.id) === String(taskId));
+      if (state.activeBidTask) {
+        if (elements.bidTaskTitle) elements.bidTaskTitle.textContent = state.activeBidTask.title;
+        openModal(elements.bidDialog);
+      }
     });
   });
 
@@ -1183,7 +1214,8 @@ elements.bidForm.addEventListener('submit', async event => {
   if (success) {
     state.activeBidTask.bids.push(bid);
     elements.bidForm.reset();
-    elements.bidDialog.close();
+    closeModal(elements.bidDialog);
+    showSimpleToast('✅ Dit bud er sendt!');
     renderTasks();
   } else {
     alert('Kunne ikke sende bud. Prøv igen.');
