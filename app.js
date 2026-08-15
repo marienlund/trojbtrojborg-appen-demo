@@ -1167,17 +1167,34 @@ document.querySelectorAll('[data-copy-email]').forEach(button => {
   });
 });
 
-elements.authForm.addEventListener('submit', event => {
+elements.authForm.addEventListener('submit', async event => {
   event.preventDefault();
-  state.user = {
-    name: document.querySelector('#nameInput').value.trim(),
-    email: document.querySelector('#emailInput').value.trim(),
-    phone: document.querySelector('#phoneInput').value.trim()
-  };
+  const name = document.querySelector('#nameInput').value.trim();
+  const email = document.querySelector('#emailInput').value.trim();
+  const phone = document.querySelector('#phoneInput').value.trim();
+
+  if (!email || !email.includes('@')) {
+    alert('Tjek venligst din e-mailadresse. Den skal være udfyldt korrekt.');
+    return;
+  }
+
+  state.user = { name, email, phone };
   writeLocal('trojborg-user', state.user);
+
+  try {
+    if (typeof sb !== 'undefined') {
+      await sb.from('subscriptions').upsert(
+        { email, categories: ['Have og gård', 'Indkøb', 'Reparationer', 'Dyr', 'Børn', 'Andet'] },
+        { onConflict: 'email' }
+      );
+    }
+  } catch (e) {
+    console.warn('Kunne ikke gemme subscription i Supabase:', e);
+  }
+
   closeModal(elements.authDialog);
   renderAccount();
-  showSimpleToast(`✅ Profil gemt for ${state.user.name}`);
+  showSimpleToast(`✅ Profil gemt for ${name}!`);
 
   if (state.activeBidTask && elements.bidDialog) {
     if (elements.bidTaskTitle) elements.bidTaskTitle.textContent = state.activeBidTask.title;
