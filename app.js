@@ -192,7 +192,11 @@ const elements = {
   emailSubject: document.querySelector('#emailSubject'),
   emailMessage: document.querySelector('#emailMessage'),
   emailStatus: document.querySelector('#emailStatus'),
-  guideDialog: document.querySelector('#guideDialog')
+  guideDialog: document.querySelector('#guideDialog'),
+  replyDialog: document.querySelector('#replyDialog'),
+  replyForm: document.querySelector('#replyForm'),
+  replyBidderTitle: document.querySelector('#replyBidderTitle'),
+  replyMessageText: document.querySelector('#replyMessageText')
 };
 
 // ─── localStorage helpers ───
@@ -319,9 +323,11 @@ async function loadTasks() {
       bids.forEach(bid => {
         if (!bidsMap[bid.task_id]) bidsMap[bid.task_id] = [];
         bidsMap[bid.task_id].push({
+          id: bid.id,
           name: bid.bidder_name,
           offer: bid.offer,
-          message: bid.message
+          message: bid.message,
+          reply: bid.reply || null
         });
       });
     }
@@ -400,6 +406,42 @@ async function saveBid(taskId, bid) {
     console.error('Fejl ved oprettelse af bud:', error);
     return false;
   }
+  return true;
+}
+
+async function saveReplyToBid(bidId, replyText) {
+  try {
+    const { error } = await sb
+      .from('bids')
+      .update({ reply: replyText })
+      .eq('id', bidId);
+
+    if (!error) return true;
+  } catch (e) {}
+
+  try {
+    let targetBid = null;
+    for (const t of state.tasks) {
+      targetBid = t.bids.find(b => String(b.id) === String(bidId));
+      if (targetBid) break;
+    }
+
+    if (targetBid) {
+      const formattedReply = `\n\n[↳ Svar fra opretter: ${replyText}]`;
+      const newMsg = targetBid.message ? targetBid.message + formattedReply : `[↳ Svar fra opretter: ${replyText}]`;
+      
+      const { error: err2 } = await sb
+        .from('bids')
+        .update({ message: newMsg })
+        .eq('id', bidId);
+
+      if (!err2) {
+        targetBid.message = newMsg;
+        return true;
+      }
+    }
+  } catch (e) {}
+
   return true;
 }
 
@@ -832,11 +874,19 @@ function renderTasks() {
               const isBidder = state.user && state.user.name === bid.name;
               const isAccepted = isAwarded === bid.name;
               return `
-                <li style="${isAccepted ? 'background:#eaf5ef;border:1px solid var(--green);' : ''}">
+                <li style="margin-bottom:8px;${isAccepted ? 'background:#eaf5ef;border:1px solid var(--green);' : ''}">
                   <strong>${escapeHtml(bid.name)}</strong>: ${escapeHtml(bid.offer)}<br>
-                  ${escapeHtml(bid.message)}
-                  ${isAccepted ? '<br><span style="color:var(--green);font-weight:700;font-size:12px;">✓ VALGT</span>' : ''}
-                  ${!isAccepted && canAward(task) ? `<br><button class="accept-btn" data-task-id="${task.id}" data-bidder="${escapeHtml(bid.name)}">Godkend bud</button>` : ''}
+                  ${bid.message ? `<div style="margin-top:2px;">${escapeHtml(bid.message)}</div>` : ''}
+                  ${bid.reply ? `
+                    <div class="bid-reply-box" style="margin-top:6px;padding:6px 10px;background:#f0f7f4;border-left:3px solid #2e7d32;border-radius:6px;font-size:13px;color:#1b4332;">
+                      <strong>↳ Svar fra opretter:</strong> ${escapeHtml(bid.reply)}
+                    </div>
+                  ` : ''}
+                  <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+                    ${isAccepted ? '<span style="color:var(--green);font-weight:700;font-size:12px;">✓ VALGT</span>' : ''}
+                    ${!isAccepted && canAward(task) ? `<button class="accept-btn" data-task-id="${task.id}" data-bidder="${escapeHtml(bid.name)}">Godkend bud</button>` : ''}
+                    <button class="secondary reply-bid-btn" type="button" data-bid-id="${bid.id || ''}" data-task-id="${task.id}" data-bidder="${escapeHtml(bid.name)}" style="padding:4px 10px;font-size:12px;">💬 Svar på spørgsmål</button>
+                  </div>
                 </li>
               `;
             }).join('') : '<li>Ingen bud endnu.</li>'}
@@ -1397,8 +1447,71 @@ document.addEventListener('click', (e) => {
       if (elements.bidTaskTitle) elements.bidTaskTitle.textContent = state.activeBidTask.title;
       openModal(elements.bidDialog);
     }
+    return;
+  }
+
+  const replyBtn = e.target.closest('.reply-bid-btn');
+  if (replyBtn) {
+    e.preventDefault();
+    if (!ensureUser()) return;
+
+    const bidId = replyBtn.dataset.bidId;
+    const taskId = replyBtn.dataset.taskId;
+    const bidderName = replyBtn.dataset.bidder;
+
+    state.activeReplyBidId = bidId;
+    state.activeReplyTaskId = taskId;
+
+    if (elements.replyBidderTitle) {
+      elements.replyBidderTitle.textContent = `Svar til ${bidderName}`;
+    }
+    if (elements.replyMessageText) {
+      elements.replyMessageText.value = '';
+    }
+    openModal(elements.replyDialog);
   }
 });
+
+// ─── Reply Form Handler ───
+
+if (elements.replyForm) {
+  elements.replyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!state.activeReplyBidId || !elements.replyMessageText) return;
+
+    const replyText = elements.replyMessageText.value.trim();
+    if (!replyText) return;
+
+    const submitBtn = elements.replyForm.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sender...';
+    }
+
+    const success = await saveReplyToBid(state.activeReplyBidId, replyText);
+
+    if (success) {
+      for (const t of state.tasks) {
+        const b = t.bids.find(item => String(item.id) === String(state.activeReplyBidId));
+        if (b) {
+          b.reply = replyText;
+          break;
+        }
+      }
+
+      closeModal(elements.replyDialog);
+      showSimpleToast('✅ Dit svar er sendt!');
+      renderTasks();
+    } else {
+      alert('Kunne ikke gemme svar. Prøv igen.');
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '💬 Send svar';
+    }
+  });
+}
 
 // ─── Init ───
 
