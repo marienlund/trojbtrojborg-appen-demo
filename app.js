@@ -789,13 +789,15 @@ function renderFilters() {
 }
 
 function filteredTasks() {
-  const query = elements.searchInput.value.trim().toLowerCase();
+  const query = (elements.searchInput && elements.searchInput.value) ? elements.searchInput.value.trim().toLowerCase() : '';
   return state.tasks.filter(task => {
-    const matchesCategory = state.activeCategory === 'Alle' || task.category === state.activeCategory;
+    const matchesCategory = !state.activeCategory || state.activeCategory === 'Alle' || task.category === state.activeCategory;
+    if (!matchesCategory) return false;
+    if (!query) return true;
     const haystack = [task.title, task.category, task.area, task.budget, task.time, task.description, task.owner]
       .join(' ')
       .toLowerCase();
-    return matchesCategory && (!query || haystack.includes(query));
+    return haystack.includes(query);
   });
 }
 
