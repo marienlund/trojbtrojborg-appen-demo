@@ -393,54 +393,69 @@ async function saveTask(task) {
 }
 
 async function saveBid(taskId, bid) {
-  const { error } = await sb
+  const { data, error } = await sb
     .from('bids')
     .insert({
       task_id: taskId,
       bidder_name: bid.name,
       offer: bid.offer,
       message: bid.message
-    });
+    })
+    .select()
+    .single();
 
   if (error) {
     console.error('Fejl ved oprettelse af bud:', error);
-    return false;
+    return null;
   }
-  return true;
+  return data;
 }
 
-async function saveReplyToBid(bidId, replyText) {
-  try {
-    const { error } = await sb
-      .from('bids')
-      .update({ reply: replyText })
-      .eq('id', bidId);
-
-    if (!error) return true;
-  } catch (e) {}
-
-  try {
-    let targetBid = null;
-    for (const t of state.tasks) {
-      targetBid = t.bids.find(b => String(b.id) === String(bidId));
-      if (targetBid) break;
-    }
-
-    if (targetBid) {
-      const formattedReply = `\n\n[↳ Svar fra opretter: ${replyText}]`;
-      const newMsg = targetBid.message ? targetBid.message + formattedReply : `[↳ Svar fra opretter: ${replyText}]`;
-      
-      const { error: err2 } = await sb
+async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
+  if (bidId && bidId !== 'undefined' && bidId !== '') {
+    try {
+      const { error } = await sb
         .from('bids')
-        .update({ message: newMsg })
+        .update({ reply: replyText })
         .eq('id', bidId);
 
-      if (!err2) {
-        targetBid.message = newMsg;
-        return true;
+      if (!error) return true;
+    } catch (e) {}
+
+    try {
+      let targetBid = null;
+      for (const t of state.tasks) {
+        targetBid = t.bids.find(b => String(b.id) === String(bidId));
+        if (targetBid) break;
       }
-    }
-  } catch (e) {}
+
+      if (targetBid) {
+        const formattedReply = `\n\n[↳ Svar fra opretter: ${replyText}]`;
+        const newMsg = targetBid.message ? targetBid.message + formattedReply : `[↳ Svar fra opretter: ${replyText}]`;
+        const { error: err2 } = await sb
+          .from('bids')
+          .update({ message: newMsg })
+          .eq('id', bidId);
+
+        if (!err2) {
+          targetBid.message = newMsg;
+          return true;
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (taskId && bidderName) {
+    try {
+      const { error } = await sb
+        .from('bids')
+        .update({ reply: replyText })
+        .eq('task_id', taskId)
+        .eq('bidder_name', bidderName);
+
+      if (!error) return true;
+    } catch (e) {}
+  }
 
   return true;
 }
@@ -1319,13 +1334,21 @@ elements.bidForm.addEventListener('submit', async event => {
     message: document.querySelector('#bidMessage').value.trim()
   };
 
-  const success = await saveBid(state.activeBidTask.id, bid);
+  const savedRecord = await saveBid(state.activeBidTask.id, bid);
 
-  if (success) {
-    state.activeBidTask.bids.push(bid);
+  if (savedRecord) {
+    const fullBid = {
+      id: savedRecord.id,
+      name: savedRecord.bidder_name || bid.name,
+      offer: savedRecord.offer || bid.offer,
+      message: savedRecord.message || bid.message,
+      reply: savedRecord.reply || null
+    };
+
+    state.activeBidTask.bids.push(fullBid);
     elements.bidForm.reset();
     closeModal(elements.bidDialog);
-    showSimpleToast('✅ Dit bud er sendt!');
+    showSimpleToast('✅ Dit bud / spørgsmål er sendt!');
     renderTasks();
   } else {
     alert('Kunne ikke sende bud. Prøv igen.');
@@ -1465,15 +1488,12 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     if (!ensureUser()) return;
 
-    const bidId = replyBtn.dataset.bidId;
-    const taskId = replyBtn.dataset.taskId;
-    const bidderName = replyBtn.dataset.bidder;
-
-    state.activeReplyBidId = bidId;
-    state.activeReplyTaskId = taskId;
+    state.activeReplyBidId = replyBtn.dataset.bidId;
+    state.activeReplyTaskId = replyBtn.dataset.taskId;
+    state.activeReplyBidder = replyBtn.dataset.bidder;
 
     if (elements.replyBidderTitle) {
-      elements.replyBidderTitle.textContent = `Svar til ${bidderName}`;
+      elements.replyBidderTitle.textContent = `Svar til ${state.activeReplyBidder || 'spørger'}`;
     }
     if (elements.replyMessageText) {
       elements.replyMessageText.value = '';
@@ -1487,7 +1507,7 @@ document.addEventListener('click', (e) => {
 if (elements.replyForm) {
   elements.replyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!state.activeReplyBidId || !elements.replyMessageText) return;
+    if (!elements.replyMessageText) return;
 
     const replyText = elements.replyMessageText.value.trim();
     if (!replyText) return;
@@ -1498,11 +1518,19 @@ if (elements.replyForm) {
       submitBtn.textContent = 'Sender...';
     }
 
-    const success = await saveReplyToBid(state.activeReplyBidId, replyText);
+    const success = await saveReplyToBid(
+      state.activeReplyBidId,
+      state.activeReplyTaskId,
+      state.activeReplyBidder,
+      replyText
+    );
 
     if (success) {
       for (const t of state.tasks) {
-        const b = t.bids.find(item => String(item.id) === String(state.activeReplyBidId));
+        const b = t.bids.find(item => 
+          (item.id && String(item.id) === String(state.activeReplyBidId)) ||
+          (item.name === state.activeReplyBidder && String(t.id) === String(state.activeReplyTaskId))
+        );
         if (b) {
           b.reply = replyText;
           break;
@@ -1520,6 +1548,8 @@ if (elements.replyForm) {
       submitBtn.disabled = false;
       submitBtn.textContent = '💬 Send svar';
     }
+  });
+}
   });
 }
 
