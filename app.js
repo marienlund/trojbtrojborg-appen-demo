@@ -1550,8 +1550,6 @@ if (elements.replyForm) {
     }
   });
 }
-  });
-}
 
 // ─── Init ───
 
