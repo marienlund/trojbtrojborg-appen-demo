@@ -22,26 +22,24 @@ function doPost(e) {
     return sendNotification(data);
   }
 
-  const sheet = getOrCreateSheet(SHEET_NAME, ["Tidspunkt", "Email", "Interesser"]);
-  const email = data.email || "";
-  const categories = Array.isArray(data.categories) ? data.categories.join(", ") : "";
-  const createdAt = data.createdAt || new Date().toISOString();
+  if (data.type === "task") {
+    return saveTaskToSheet(data);
+  }
 
-  sheet.appendRow([createdAt, email, categories]);
+  return saveInterest(data);
+}
 
-  try {
-    MailApp.sendEmail({
-      to: NOTIFY_EMAIL,
-      subject: "Ny interesse i Trøjborg-appen",
-      body: [
-        "Der er kommet en ny interessetilmelding.",
-        "",
-        `Email: ${email}`,
-        `Interesser: ${categories}`,
-        `Tidspunkt: ${createdAt}`
-      ].join("\n")
-    });
-  } catch (err) {}
+function saveTaskToSheet(data) {
+  const sheet = getOrCreateSheet("Opgaver", ["Tidspunkt", "Titel", "Kategori", "Område", "Budget", "Ejer", "Email"]);
+  sheet.appendRow([
+    data.createdAt || new Date().toISOString(),
+    data.title || "",
+    data.category || "",
+    data.area || "",
+    data.budget || "",
+    data.owner || "",
+    data.ownerEmail || ""
+  ]);
 
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true }))

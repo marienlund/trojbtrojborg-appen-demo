@@ -999,43 +999,53 @@ function showSimpleToast(message, duration = 5000, onClick = null) {
 
 // ─── Notify subscribers ───
 
+const notifiedTaskIds = new Set();
+
 async function notifySubscribers(task) {
+  if (!task || !task.id) return;
+
+  if (notifiedTaskIds.has(task.id)) {
+    console.log(`Notifikationer for opgave "${task.title}" er allerede sendt.`);
+    return;
+  }
+  notifiedTaskIds.add(task.id);
+
   try {
     const { data: subs, error } = await sb
       .from('subscriptions')
       .select('email, categories')
       .contains('categories', [task.category]);
 
-    if (error) {
-      console.warn('Fejl ved søgning i Supabase subscriptions:', error);
-      return;
-    }
+    if (error || !subs || subs.length === 0) return;
 
-    if (!subs || subs.length === 0) {
-      console.log(`Ingen abonnenter fundet for kategorien "${task.category}"`);
-      return;
-    }
+    // Unikke e-mails
+    const uniqueEmails = [...new Set(
+      subs
+        .map(s => s.email ? s.email.trim().toLowerCase() : '')
+        .filter(email => email && email.includes('@'))
+    )];
 
-    // Send e-mail notifikation til alle abonnenter i denne kategori
-    for (const sub of subs) {
-      if (!sub.email) continue;
+    const ownerEmail = (task.ownerEmail || state.user?.email || '').trim().toLowerCase();
+
+    for (const email of uniqueEmails) {
+      // Send IKKE e-mail notifikation til oprettelsen af opgaven selv!
+      if (ownerEmail && email === ownerEmail) continue;
+
       fetch(sharedEndpoint, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           type: 'notification',
-          subscriberEmail: sub.email,
+          subscriberEmail: email,
           taskTitle: task.title,
           taskCategory: task.category,
           taskArea: task.area || 'Trøjborg',
           taskBudget: task.budget || 'Ikke angivet',
           taskOwner: task.owner
         })
-      }).catch(err => console.warn('Notifikations-fejl for', sub.email, err));
+      }).catch(err => console.warn('Notifikations-fejl for', email, err));
     }
-
-    showSimpleToast(`Notifikation sendt til ${subs.length} interesserede i "${task.category}"`);
   } catch (err) {
     console.warn('Notifikation fejlede:', err);
   }
