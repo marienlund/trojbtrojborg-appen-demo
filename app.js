@@ -351,7 +351,56 @@ async function loadTasks() {
   }));
 }
 
+function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function parseTaskPhotos(description) {
+  if (!description) return { cleanDescription: '', photos: [] };
+  const photos = [];
+  const cleanDescription = description.replace(/\[FOTO:([^\]]+)\]/g, (match, url) => {
+    photos.push(url);
+    return '';
+  }).trim();
+  return { cleanDescription, photos };
+}
+
+let pendingTaskPhotos = [];
+
 async function saveTask(task) {
+  let fullDescription = task.description || '';
+  if (task.images && task.images.length > 0) {
+    fullDescription += '\n\n' + task.images.map(img => `[FOTO:${img}]`).join('\n');
+  }
+
   const { data, error } = await sb
     .from('tasks')
     .insert({
@@ -360,7 +409,7 @@ async function saveTask(task) {
       area: task.area,
       budget: task.budget,
       time: task.time,
-      description: task.description,
+      description: fullDescription,
       owner_name: task.owner,
       owner_email: state.user?.email || '',
       owner_phone: state.user?.phone || '',
@@ -914,6 +963,8 @@ function renderTasks() {
     const isAwarded = task.awardedTo;
     const isOwner = state.user && state.user.email === task.ownerEmail;
 
+    const { cleanDescription, photos } = parseTaskPhotos(task.description);
+
     return `
     <article class="task-card ${isAwarded ? 'awarded' : ''}">
       <div class="task-main">
@@ -930,7 +981,14 @@ function renderTasks() {
           </div>
           <span class="badge">${escapeHtml(task.category)}</span>
         </div>
-        <p>${escapeHtml(task.description)}</p>
+        <p>${escapeHtml(cleanDescription)}</p>
+        ${photos.length ? `
+          <div class="task-photos-gallery" style="display:flex;gap:8px;margin-top:8px;margin-bottom:8px;flex-wrap:wrap;">
+            ${photos.map(url => `
+              <img src="${url}" class="task-thumbnail-photo" alt="Opgave foto" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;cursor:pointer;">
+            `).join('')}
+          </div>
+        ` : ''}
         <div class="owner-line">
           <span class="avatar">${escapeHtml(task.owner.slice(0, 1).toUpperCase())}</span>
           <span>${escapeHtml(task.owner)} - ${escapeHtml(task.ownerNote || 'Lokal bruger')}</span>
@@ -1345,6 +1403,67 @@ elements.authForm.addEventListener('submit', async event => {
   }
 });
 
+// ─── Photo Upload Listeners ───
+
+const taskPhotosInput = document.querySelector('#taskPhotos');
+const photoPreviewContainer = document.querySelector('#photoPreviewContainer');
+
+if (taskPhotosInput) {
+  taskPhotosInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files).slice(0, 2);
+    pendingTaskPhotos = [];
+    if (photoPreviewContainer) photoPreviewContainer.innerHTML = '<span style="font-size:13px;color:var(--muted);">Komprimerer fotos...</span>';
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      try {
+        const compressedDataUrl = await compressImage(file, 800, 800, 0.7);
+        pendingTaskPhotos.push(compressedDataUrl);
+      } catch (err) {
+        console.warn('Fejl ved komprimering:', err);
+      }
+    }
+    renderPhotoPreviews();
+  });
+}
+
+function renderPhotoPreviews() {
+  if (!photoPreviewContainer) return;
+  if (pendingTaskPhotos.length === 0) {
+    photoPreviewContainer.innerHTML = '';
+    return;
+  }
+
+  photoPreviewContainer.innerHTML = pendingTaskPhotos.map((url, index) => `
+    <div style="position:relative;display:inline-block;">
+      <img src="${url}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;">
+      <button type="button" data-index="${index}" class="remove-photo-btn" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;font-weight:700;line-height:20px;cursor:pointer;padding:0;">&times;</button>
+    </div>
+  `).join('');
+
+  photoPreviewContainer.querySelectorAll('.remove-photo-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const idx = parseInt(btn.dataset.index, 10);
+      pendingTaskPhotos.splice(idx, 1);
+      renderPhotoPreviews();
+    });
+  });
+}
+
+// ─── Lightbox / Fullscreen Image Click Listener ───
+
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('task-thumbnail-photo')) {
+    const lightboxImg = document.querySelector('#lightboxImage');
+    const imageModal = document.querySelector('#imageModal');
+    if (lightboxImg && imageModal) {
+      lightboxImg.src = e.target.src;
+      openModal(imageModal);
+    }
+  }
+});
+
 elements.taskForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!ensureUser()) return;
@@ -1361,7 +1480,8 @@ elements.taskForm.addEventListener('submit', async event => {
     time: document.querySelector('#taskTime').value.trim(),
     description: document.querySelector('#taskDescription').value.trim(),
     owner: state.user.name,
-    contact: document.querySelector('#taskContact').value.trim() || 'Kontakt aftales efter accept'
+    contact: document.querySelector('#taskContact').value.trim() || 'Kontakt aftales efter accept',
+    images: [...pendingTaskPhotos]
   };
 
   const savedTask = await saveTask(taskData);
@@ -1369,7 +1489,9 @@ elements.taskForm.addEventListener('submit', async event => {
   if (savedTask) {
     state.tasks.unshift(savedTask);
     elements.taskForm.reset();
-    elements.taskDialog.close();
+    pendingTaskPhotos = [];
+    renderPhotoPreviews();
+    closeModal(elements.taskDialog);
     render();
 
     try {
