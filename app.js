@@ -954,7 +954,7 @@ function renderTasks() {
           </ul>
         </div>
         <div class="card-actions">
-          ${!isAwarded ? `<button class="primary bid-button" type="button" data-task-id="${task.id}">Byd ind</button>` : ''}
+          ${!isAwarded ? `<button class="primary bid-button" type="button" data-task-id="${task.id}">💬 Byd ind / Stil spørgsmål</button>` : ''}
           ${canDelete(task) ? `<button class="danger delete-task-button" type="button" data-task-id="${task.id}">Slet</button>` : ''}
         </div>
       </aside>
