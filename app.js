@@ -1295,11 +1295,19 @@ function escapeHtml(value) {
 elements.searchInput.addEventListener('input', renderTasks);
 
 elements.openTaskButton.addEventListener('click', () => {
-  if (ensureUser()) elements.taskDialog.showModal();
+  const nameInput = document.querySelector('#taskOwnerName');
+  const emailInput = document.querySelector('#taskOwnerEmail');
+  if (nameInput && state.user?.name) nameInput.value = state.user.name;
+  if (emailInput && state.user?.email) emailInput.value = state.user.email;
+  openModal(elements.taskDialog);
 });
 
 elements.heroTaskButton.addEventListener('click', () => {
-  if (ensureUser()) elements.taskDialog.showModal();
+  const nameInput = document.querySelector('#taskOwnerName');
+  const emailInput = document.querySelector('#taskOwnerEmail');
+  if (nameInput && state.user?.name) nameInput.value = state.user.name;
+  if (emailInput && state.user?.email) emailInput.value = state.user.email;
+  openModal(elements.taskDialog);
 });
 
 document.querySelectorAll('.open-guide-btn').forEach(button => {
@@ -1466,11 +1474,33 @@ document.addEventListener('click', (e) => {
 
 elements.taskForm.addEventListener('submit', async event => {
   event.preventDefault();
-  if (!ensureUser()) return;
+
+  const nameInput = document.querySelector('#taskOwnerName');
+  const emailInput = document.querySelector('#taskOwnerEmail');
+
+  const ownerName = nameInput ? nameInput.value.trim() : (state.user?.name || '');
+  const ownerEmail = emailInput ? emailInput.value.trim() : (state.user?.email || '');
+
+  if (!ownerName) {
+    alert('Skriv venligst dit navn.');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+  if (!ownerEmail || !ownerEmail.includes('@')) {
+    alert('Skriv venligst en gyldig e-mailadresse så du kan modtage svar.');
+    if (emailInput) emailInput.focus();
+    return;
+  }
+
+  if (!state.user) state.user = { name: ownerName, email: ownerEmail, phone: '' };
+  else { state.user.name = ownerName; state.user.email = ownerEmail; }
+  writeLocal('trojborg-user', state.user);
 
   const submitButton = elements.taskForm.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-  submitButton.textContent = 'Opretter...';
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = 'Opretter...';
+  }
 
   const taskData = {
     title: document.querySelector('#taskTitle').value.trim(),
@@ -1479,8 +1509,8 @@ elements.taskForm.addEventListener('submit', async event => {
     budget: document.querySelector('#taskBudget').value.trim(),
     time: document.querySelector('#taskTime').value.trim(),
     description: document.querySelector('#taskDescription').value.trim(),
-    owner: state.user.name,
-    contact: document.querySelector('#taskContact').value.trim() || 'Kontakt aftales efter accept',
+    owner: ownerName,
+    contact: document.querySelector('#taskContact').value.trim() || ownerEmail,
     images: [...pendingTaskPhotos]
   };
 
@@ -1492,6 +1522,7 @@ elements.taskForm.addEventListener('submit', async event => {
     pendingTaskPhotos = [];
     renderPhotoPreviews();
     closeModal(elements.taskDialog);
+    showSimpleToast('✅ Din opgave er oprettet!');
     render();
 
     try {
@@ -1500,14 +1531,15 @@ elements.taskForm.addEventListener('submit', async event => {
       console.warn('Opgaven blev gemt i Supabase, men kunne ikke sendes til Google Sheets.', error);
     }
 
-    // Notify subscribers in background
     notifySubscribers(savedTask).catch(() => {});
   } else {
     alert('Kunne ikke oprette opgaven. Prøv igen.');
   }
 
-  submitButton.disabled = false;
-  submitButton.textContent = 'Læg opgave op';
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = 'Læg opgave op';
+  }
 });
 
 elements.bidForm.addEventListener('submit', async event => {

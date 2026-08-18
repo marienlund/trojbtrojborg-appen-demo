@@ -272,6 +272,16 @@
       <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
       <h2>Opret opgave</h2>
       <p>Trøjborg-appen er for private opgaver. Betaling og praktiske aftaler klares direkte mellem opretter og hjælper.</p>
+      <div class="two-col">
+        <label for="taskOwnerName">
+          Dit navn
+          <input id="taskOwnerName" required placeholder="Fx Hans Peter">
+        </label>
+        <label for="taskOwnerEmail">
+          Din e-mail (til svar/notifikation)
+          <input id="taskOwnerEmail" type="email" required placeholder="din@email.dk">
+        </label>
+      </div>
       <label for="taskTitle">
         Titel
         <input id="taskTitle" maxlength="80" required placeholder="Fx hjælp til hækklipning">
@@ -399,10 +409,10 @@
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer onerror="console.warn('OneSignal kunne ikke indlæses (f.eks. blokeret af adblocker/DNS). Bruger indbygget Service Worker fallback.')"></script>
-  <script src="onesignal-config.js?v=20260818-13"></script>
-  <script src="interest-config.js?v=20260818-13"></script>
-  <script src="push-notifications.js?v=20260818-13"></script>
-  <script src="app.js?v=20260818-13"></script>
-  <script src="interest.js?v=20260818-13"></script>
+  <script src="onesignal-config.js?v=20260818-14"></script>
+  <script src="interest-config.js?v=20260818-14"></script>
+  <script src="push-notifications.js?v=20260818-14"></script>
+  <script src="app.js?v=20260818-14"></script>
+  <script src="interest.js?v=20260818-14"></script>
 </body>
 </html>
