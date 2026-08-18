@@ -1,5 +1,5 @@
 // Service Worker for Trøjborg-appen (Push Notifications & Red Dot / App Badging)
-const CACHE_NAME = 'trojborg-app-v1';
+const CACHE_NAME = 'trojborg-app-v20260818-14';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
