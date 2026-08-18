@@ -310,16 +310,20 @@
     <form class="dialog-form" id="bidForm">
       <button class="icon-button close-dialog" value="cancel" aria-label="Luk" type="button">×</button>
       <h2>💬 Byd ind / Stil spørgsmål</h2>
-      <p id="bidTaskTitle"></p>
+      <p id="bidTaskTitle" style="font-weight:700;color:var(--green);margin-bottom:8px;"></p>
+      <label for="bidName">
+        Dit navn
+        <input id="bidName" required placeholder="Skriv dit navn (fx Hans Peter)">
+      </label>
       <label for="bidOffer">
-        Dit tilbud / spørgsmål
-        <input id="bidOffer" required placeholder="Fx 250 kr., spørgsmål eller kan hjælpe gratis">
+        Dit tilbud / pris (valgfrit)
+        <input id="bidOffer" placeholder="Fx 250 kr., spørgsmål eller kan hjælpe gratis">
       </label>
       <label for="bidMessage">
         Besked eller spørgsmål
         <textarea id="bidMessage" rows="4" required placeholder="Skriv dit spørgsmål eller hvornår og hvordan du kan hjælpe"></textarea>
       </label>
-      <button class="primary full" type="submit">💬 Send bud / spørgsmål</button>
+      <button class="primary full" type="submit" style="margin-top:10px;padding:14px;font-size:16px;font-weight:700;">💬 Send bud / spørgsmål</button>
     </form>
   </dialog>
 
@@ -382,10 +386,10 @@
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer onerror="console.warn('OneSignal kunne ikke indlæses (f.eks. blokeret af adblocker/DNS). Bruger indbygget Service Worker fallback.')"></script>
-  <script src="onesignal-config.js?v=20260818-07"></script>
-  <script src="interest-config.js?v=20260818-07"></script>
-  <script src="push-notifications.js?v=20260818-07"></script>
-  <script src="app.js?v=20260818-07"></script>
-  <script src="interest.js?v=20260818-07"></script>
+  <script src="onesignal-config.js?v=20260818-08"></script>
+  <script src="interest-config.js?v=20260818-08"></script>
+  <script src="push-notifications.js?v=20260818-08"></script>
+  <script src="app.js?v=20260818-08"></script>
+  <script src="interest.js?v=20260818-08"></script>
 </body>
 </html>

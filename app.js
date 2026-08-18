@@ -693,6 +693,7 @@ function scrollToTask(taskId) {
 function openModal(dialogEl) {
   if (!dialogEl) return;
   dialogEl.classList.remove('hidden');
+  dialogEl.classList.add('active-modal');
   dialogEl.setAttribute('open', '');
   dialogEl.style.display = 'block';
   dialogEl.style.zIndex = '999999';
@@ -708,6 +709,7 @@ function openModal(dialogEl) {
 
 function closeModal(dialogEl) {
   if (!dialogEl) return;
+  dialogEl.classList.remove('active-modal');
   if (typeof dialogEl.close === 'function') {
     try {
       dialogEl.close();
@@ -964,11 +966,12 @@ function renderTasks() {
   elements.taskList.querySelectorAll('.bid-button').forEach(button => {
     button.addEventListener('click', (e) => {
       e.preventDefault();
-      if (!ensureUser()) return;
       const taskId = button.dataset.taskId;
       state.activeBidTask = state.tasks.find(task => String(task.id) === String(taskId));
       if (state.activeBidTask) {
         if (elements.bidTaskTitle) elements.bidTaskTitle.textContent = state.activeBidTask.title;
+        const nameInput = document.querySelector('#bidName');
+        if (nameInput && state.user?.name) nameInput.value = state.user.name;
         openModal(elements.bidDialog);
       }
     });
@@ -1368,18 +1371,33 @@ elements.taskForm.addEventListener('submit', async event => {
 
 elements.bidForm.addEventListener('submit', async event => {
   event.preventDefault();
-  if (!state.activeBidTask || !ensureUser()) return;
+  if (!state.activeBidTask) return;
+
+  const nameInput = document.querySelector('#bidName');
+  const offerInput = document.querySelector('#bidOffer');
+  const messageInput = document.querySelector('#bidMessage');
+
+  const name = nameInput ? nameInput.value.trim() : (state.user?.name || '');
+  if (!name) {
+    alert('Skriv venligst dit navn.');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  if (!state.user) state.user = { name: name, email: '', phone: '' };
+  else state.user.name = name;
+  writeLocal('trojborg-user', state.user);
+
+  const offer = offerInput && offerInput.value.trim() ? offerInput.value.trim() : 'Spørgsmål';
+  const message = messageInput ? messageInput.value.trim() : '';
 
   const submitButton = elements.bidForm.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-  submitButton.textContent = 'Sender...';
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = 'Sender...';
+  }
 
-  const bid = {
-    name: state.user.name,
-    offer: document.querySelector('#bidOffer').value.trim(),
-    message: document.querySelector('#bidMessage').value.trim()
-  };
-
+  const bid = { name, offer, message };
   const savedRecord = await saveBid(state.activeBidTask.id, bid);
 
   if (savedRecord) {
@@ -1397,11 +1415,13 @@ elements.bidForm.addEventListener('submit', async event => {
     showSimpleToast('✅ Dit bud / spørgsmål er sendt!');
     renderTasks();
   } else {
-    alert('Kunne ikke sende bud. Prøv igen.');
+    alert('Kunne ikke sende bud / spørgsmål. Prøv igen.');
   }
 
-  submitButton.disabled = false;
-  submitButton.textContent = 'Send bud';
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = '💬 Send bud / spørgsmål';
+  }
 });
 
 // ─── E-mail Pop-up Modal Event Handlers ───
