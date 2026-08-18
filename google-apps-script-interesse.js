@@ -103,13 +103,17 @@ function sendNotification(data) {
   ].join("\n");
 
   try {
-    MailApp.sendEmail({
-      to: recipient,
-      subject: subject,
-      body: body
-    });
+    GmailApp.sendEmail(recipient, subject, body);
   } catch (err) {
-    Logger.log("Fejl ved afsendelse af notifikation: " + err);
+    try {
+      MailApp.sendEmail({
+        to: recipient,
+        subject: subject,
+        body: body
+      });
+    } catch (err2) {
+      Logger.log("Fejl ved afsendelse af notifikation: " + err2);
+    }
   }
 
   return ContentService
