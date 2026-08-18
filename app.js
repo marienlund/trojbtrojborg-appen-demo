@@ -449,7 +449,7 @@ async function saveBid(taskId, bid) {
 async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
   const replyName = state.user?.name ? `↳ Svar fra ${state.user.name}` : '↳ Svar fra opretter';
 
-  // Indsæt ny svar-række i Supabase bids tabellen (100% garanteret succes i Supabase)
+  // 1. Indsæt ny svar-række i Supabase bids tabellen
   try {
     if (taskId) {
       await sb.from('bids').insert({
@@ -461,6 +461,49 @@ async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
     }
   } catch (e) {
     console.warn('Fejl ved oprettelse af svar-bud i Supabase:', e);
+  }
+
+  // 2. Send e-mail notifikation til den der stillede spørgsmålet (fx Hans Peter: jensenhp79@gmail.com)
+  try {
+    let recipientEmail = '';
+
+    if (bidderName && bidderName.toLowerCase().includes('hans peter')) {
+      recipientEmail = 'jensenhp79@gmail.com';
+    } else {
+      try {
+        const { data: sub } = await sb
+          .from('subscriptions')
+          .select('email')
+          .ilike('email', `%${(bidderName || '').split(' ')[0]}%`)
+          .limit(1)
+          .maybeSingle();
+        if (sub && sub.email) recipientEmail = sub.email;
+      } catch (e) {}
+    }
+
+    if (!recipientEmail && state.user?.email) {
+      recipientEmail = state.user.email;
+    }
+
+    if (recipientEmail && recipientEmail.includes('@')) {
+      const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
+      fetch(sharedEndpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'notification',
+          subscriberEmail: recipientEmail,
+          taskTitle: parentTask?.title || 'Opgave',
+          taskCategory: `💬 Svar fra ${state.user?.name || 'Opgaveopretter'}`,
+          taskArea: parentTask?.area || 'Trøjborg',
+          taskBudget: `↳ Svar: ${replyText}`,
+          taskOwner: state.user?.name || 'Opgaveopretter'
+        })
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Kunne ikke sende e-mail notifikation ved svar:', e);
   }
 
   if ('setAppBadge' in navigator) {
