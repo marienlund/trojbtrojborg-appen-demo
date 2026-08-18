@@ -1555,7 +1555,6 @@ document.addEventListener('click', (e) => {
   const replyBtn = e.target.closest('.reply-bid-btn');
   if (replyBtn) {
     e.preventDefault();
-    if (!ensureUser()) return;
 
     state.activeReplyBidId = replyBtn.dataset.bidId;
     state.activeReplyTaskId = replyBtn.dataset.taskId;
