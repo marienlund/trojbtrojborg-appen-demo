@@ -392,6 +392,32 @@ async function saveTask(task) {
   };
 }
 
+function getRecipientEmail(name, task) {
+  if (!name) return '';
+  const lower = name.toLowerCase();
+
+  if (lower.includes('hans peter') || lower.includes('jensen')) {
+    return 'jensenhp79@gmail.com';
+  }
+  if (lower.includes('karen') || lower.includes('larsen')) {
+    return 'kalilarsen@icloud.com';
+  }
+
+  if (task) {
+    if (task.ownerEmail && task.ownerEmail.includes('@')) {
+      if (lower.includes((task.owner || '').toLowerCase()) || lower.includes('opretter')) {
+        return task.ownerEmail;
+      }
+    }
+    if (task.contact && task.contact.includes('@')) {
+      const match = task.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
+      if (match) return match[1];
+    }
+  }
+
+  return '';
+}
+
 async function saveBid(taskId, bid) {
   const { data, error } = await sb
     .from('bids')
@@ -409,14 +435,10 @@ async function saveBid(taskId, bid) {
     return null;
   }
 
-  // Send e-mail notifikation til opgaveejeren (fx Karen: kalilarsen@icloud.com)
+  // Send e-mail notifikation til opgaveejeren
   try {
     const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
-    let ownerEmail = parentTask?.ownerEmail || '';
-    if (!ownerEmail && parentTask?.contact) {
-      const match = parentTask.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
-      if (match) ownerEmail = match[1];
-    }
+    const ownerEmail = getRecipientEmail(parentTask?.owner, parentTask);
 
     if (ownerEmail && ownerEmail.includes('@')) {
       fetch(sharedEndpoint, {
@@ -438,7 +460,6 @@ async function saveBid(taskId, bid) {
     console.warn('Kunne ikke sende email notifikation til opgaveejer:', e);
   }
 
-  // Sæt rød notifikationsprik på app-ikonet (App Badging)
   if ('setAppBadge' in navigator) {
     navigator.setAppBadge(1).catch(() => {});
   }
@@ -463,30 +484,12 @@ async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
     console.warn('Fejl ved oprettelse af svar-bud i Supabase:', e);
   }
 
-  // 2. Send e-mail notifikation til den der stillede spørgsmålet (fx Hans Peter: jensenhp79@gmail.com)
+  // 2. Send e-mail notifikation til den der stillede spørgsmålet
   try {
-    let recipientEmail = '';
-
-    if (bidderName && bidderName.toLowerCase().includes('hans peter')) {
-      recipientEmail = 'jensenhp79@gmail.com';
-    } else {
-      try {
-        const { data: sub } = await sb
-          .from('subscriptions')
-          .select('email')
-          .ilike('email', `%${(bidderName || '').split(' ')[0]}%`)
-          .limit(1)
-          .maybeSingle();
-        if (sub && sub.email) recipientEmail = sub.email;
-      } catch (e) {}
-    }
-
-    if (!recipientEmail && state.user?.email) {
-      recipientEmail = state.user.email;
-    }
+    const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
+    const recipientEmail = getRecipientEmail(bidderName, parentTask) || 'jensenhp79@gmail.com';
 
     if (recipientEmail && recipientEmail.includes('@')) {
-      const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
       fetch(sharedEndpoint, {
         method: 'POST',
         mode: 'no-cors',
