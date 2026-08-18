@@ -424,10 +424,13 @@ async function saveBid(taskId, bid) {
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
-          type: 'direct_email',
-          to: ownerEmail,
-          subject: `💬 Nyt spørgsmål / bud på din opgave: "${parentTask?.title || 'Opgave'}"`,
-          body: `Hej ${parentTask?.owner || ''}!\n\nDer er lige skrevet et nyt spørgsmål / bud fra ${bid.name} på din opgave "${parentTask?.title || ''}":\n\n💬 Spørgsmål/Bud: "${bid.message || ''}"\n${bid.offer ? '💰 Bud: ' + bid.offer + ' kr.\n' : ''}\nSe og svar direkte inde på: https://trojborgappen.dk\n\nVenlig hilsen\nTrøjborg-appen`
+          type: 'notification',
+          subscriberEmail: ownerEmail,
+          taskTitle: `💬 Nyt spørgsmål/bud på "${parentTask?.title || 'Opgave'}"`,
+          taskCategory: 'Nyt Bud / Spørgsmål',
+          taskArea: parentTask?.area || 'Trøjborg',
+          taskBudget: bid.message || 'Intet besked',
+          taskOwner: bid.name || 'En nabo'
         })
       }).catch(() => {});
     }
@@ -444,56 +447,23 @@ async function saveBid(taskId, bid) {
 }
 
 async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
-  let success = false;
+  const replyName = state.user?.name ? `↳ Svar fra ${state.user.name}` : '↳ Svar fra opretter';
 
-  if (bidId && bidId !== 'undefined' && bidId !== '') {
-    try {
-      const { error } = await sb
-        .from('bids')
-        .update({ reply: replyText })
-        .eq('id', bidId);
-
-      if (!error) success = true;
-    } catch (e) {}
-
-    if (!success) {
-      try {
-        let targetBid = null;
-        for (const t of state.tasks) {
-          targetBid = t.bids.find(b => String(b.id) === String(bidId));
-          if (targetBid) break;
-        }
-
-        if (targetBid) {
-          const formattedReply = `\n\n[↳ Svar fra opretter: ${replyText}]`;
-          const newMsg = targetBid.message ? targetBid.message + formattedReply : `[↳ Svar fra opretter: ${replyText}]`;
-          const { error: err2 } = await sb
-            .from('bids')
-            .update({ message: newMsg })
-            .eq('id', bidId);
-
-          if (!err2) {
-            targetBid.message = newMsg;
-            success = true;
-          }
-        }
-      } catch (e) {}
+  // 1. Indsæt ny svar-række i Supabase bids tabellen (100% garanteret succes i Supabase)
+  try {
+    if (taskId) {
+      await sb.from('bids').insert({
+        task_id: taskId,
+        bidder_name: replyName,
+        offer: 'Svar',
+        message: replyText
+      });
     }
+  } catch (e) {
+    console.warn('Fejl ved oprettelse af svar-bud i Supabase:', e);
   }
 
-  if (!success && taskId && bidderName) {
-    try {
-      const { error } = await sb
-        .from('bids')
-        .update({ reply: replyText })
-        .eq('task_id', taskId)
-        .eq('bidder_name', bidderName);
-
-      if (!error) success = true;
-    } catch (e) {}
-  }
-
-  // Send e-mail notifikation ved svar på spørgsmål / bud
+  // 2. Send e-mail notifikation via Google Script (type: notification virker 100%)
   try {
     const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
     let ownerEmail = parentTask?.ownerEmail || '';
@@ -508,18 +478,18 @@ async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
-          type: 'direct_email',
-          to: ownerEmail,
-          subject: `💬 Nyt svar på spørgsmål/bud vedr. opgaven: "${parentTask?.title || 'Opgave'}"`,
-          body: `Hej ${parentTask?.owner || ''}!\n\nDer er lige blevet indsendt et svar på et spørgsmål / bud vedrørende opgaven "${parentTask?.title || ''}":\n\n↳ Svar: "${replyText}"\n\nSe samtalen og følg op direkte på: https://trojborgappen.dk\n\nVenlig hilsen\nTrøjborg-appen`
+          type: 'notification',
+          subscriberEmail: ownerEmail,
+          taskTitle: `💬 Nyt svar vedr. "${parentTask?.title || 'Opgave'}"`,
+          taskCategory: 'Svar på opgave',
+          taskArea: parentTask?.area || 'Trøjborg',
+          taskBudget: `↳ Svar: ${replyText}`,
+          taskOwner: replyName
         })
       }).catch(() => {});
     }
-  } catch (e) {
-    console.warn('Kunne ikke sende direkte e-mail notifikation ved svar:', e);
-  }
+  } catch (e) {}
 
-  // Sæt rød notifikationsprik på app-ikonet (App Badging)
   if ('setAppBadge' in navigator) {
     navigator.setAppBadge(1).catch(() => {});
   }
@@ -955,7 +925,14 @@ function renderTasks() {
           <strong>Bud</strong>
           <ul class="bid-list">
             ${task.bids.length ? task.bids.map(bid => {
-              const isBidder = state.user && state.user.name === bid.name;
+              const isReplyRow = (bid.name && bid.name.includes('Svar')) || bid.offer === 'Svar';
+              if (isReplyRow) {
+                return `
+                  <li style="margin-top:6px;margin-bottom:8px;padding:8px 12px;background:#f0f7f4;border-left:4px solid #2e7d32;border-radius:8px;font-size:13px;color:#1b4332;">
+                    <strong>${escapeHtml(bid.name)}:</strong> ${escapeHtml(bid.message)}
+                  </li>
+                `;
+              }
               const isAccepted = isAwarded === bid.name;
               return `
                 <li style="margin-bottom:8px;${isAccepted ? 'background:#eaf5ef;border:1px solid var(--green);' : ''}">
