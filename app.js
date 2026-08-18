@@ -409,35 +409,6 @@ async function saveBid(taskId, bid) {
     return null;
   }
 
-  // Send direkte e-mail notifikation til opgaveejeren (fx Karen)
-  try {
-    const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
-    let ownerEmail = parentTask?.ownerEmail || '';
-    if (!ownerEmail && parentTask?.contact) {
-      const match = parentTask.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
-      if (match) ownerEmail = match[1];
-    }
-
-    if (ownerEmail && ownerEmail.includes('@')) {
-      fetch(sharedEndpoint, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          type: 'notification',
-          subscriberEmail: ownerEmail,
-          taskTitle: `💬 Nyt spørgsmål/bud på "${parentTask?.title || 'Opgave'}"`,
-          taskCategory: 'Nyt Bud / Spørgsmål',
-          taskArea: parentTask?.area || 'Trøjborg',
-          taskBudget: bid.message || 'Intet besked',
-          taskOwner: bid.name || 'En nabo'
-        })
-      }).catch(() => {});
-    }
-  } catch (e) {
-    console.warn('Kunne ikke sende direkte mail notifikation:', e);
-  }
-
   // Sæt rød notifikationsprik på app-ikonet (App Badging)
   if ('setAppBadge' in navigator) {
     navigator.setAppBadge(1).catch(() => {});
@@ -449,7 +420,7 @@ async function saveBid(taskId, bid) {
 async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
   const replyName = state.user?.name ? `↳ Svar fra ${state.user.name}` : '↳ Svar fra opretter';
 
-  // 1. Indsæt ny svar-række i Supabase bids tabellen (100% garanteret succes i Supabase)
+  // Indsæt ny svar-række i Supabase bids tabellen (100% garanteret succes i Supabase)
   try {
     if (taskId) {
       await sb.from('bids').insert({
@@ -462,33 +433,6 @@ async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
   } catch (e) {
     console.warn('Fejl ved oprettelse af svar-bud i Supabase:', e);
   }
-
-  // 2. Send e-mail notifikation via Google Script (type: notification virker 100%)
-  try {
-    const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
-    let ownerEmail = parentTask?.ownerEmail || '';
-    if (!ownerEmail && parentTask?.contact) {
-      const match = parentTask.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
-      if (match) ownerEmail = match[1];
-    }
-
-    if (ownerEmail && ownerEmail.includes('@')) {
-      fetch(sharedEndpoint, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          type: 'notification',
-          subscriberEmail: ownerEmail,
-          taskTitle: `💬 Nyt svar vedr. "${parentTask?.title || 'Opgave'}"`,
-          taskCategory: 'Svar på opgave',
-          taskArea: parentTask?.area || 'Trøjborg',
-          taskBudget: `↳ Svar: ${replyText}`,
-          taskOwner: replyName
-        })
-      }).catch(() => {});
-    }
-  } catch (e) {}
 
   if ('setAppBadge' in navigator) {
     navigator.setAppBadge(1).catch(() => {});
