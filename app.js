@@ -408,10 +408,44 @@ async function saveBid(taskId, bid) {
     console.error('Fejl ved oprettelse af bud:', error);
     return null;
   }
+
+  // Send direkte e-mail notifikation til opgaveejeren (fx Karen)
+  try {
+    const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
+    let ownerEmail = parentTask?.ownerEmail || '';
+    if (!ownerEmail && parentTask?.contact) {
+      const match = parentTask.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
+      if (match) ownerEmail = match[1];
+    }
+
+    if (ownerEmail && ownerEmail.includes('@')) {
+      fetch(sharedEndpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'direct_email',
+          to: ownerEmail,
+          subject: `💬 Nyt spørgsmål / bud på din opgave: "${parentTask?.title || 'Opgave'}"`,
+          body: `Hej ${parentTask?.owner || ''}!\n\nDer er lige skrevet et nyt spørgsmål / bud fra ${bid.name} på din opgave "${parentTask?.title || ''}":\n\n💬 Spørgsmål/Bud: "${bid.message || ''}"\n${bid.offer ? '💰 Bud: ' + bid.offer + ' kr.\n' : ''}\nSe og svar direkte inde på: https://trojborgappen.dk\n\nVenlig hilsen\nTrøjborg-appen`
+        })
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Kunne ikke sende direkte mail notifikation:', e);
+  }
+
+  // Sæt rød notifikationsprik på app-ikonet (App Badging)
+  if ('setAppBadge' in navigator) {
+    navigator.setAppBadge(1).catch(() => {});
+  }
+
   return data;
 }
 
 async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
+  let success = false;
+
   if (bidId && bidId !== 'undefined' && bidId !== '') {
     try {
       const { error } = await sb
@@ -419,33 +453,35 @@ async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
         .update({ reply: replyText })
         .eq('id', bidId);
 
-      if (!error) return true;
+      if (!error) success = true;
     } catch (e) {}
 
-    try {
-      let targetBid = null;
-      for (const t of state.tasks) {
-        targetBid = t.bids.find(b => String(b.id) === String(bidId));
-        if (targetBid) break;
-      }
-
-      if (targetBid) {
-        const formattedReply = `\n\n[↳ Svar fra opretter: ${replyText}]`;
-        const newMsg = targetBid.message ? targetBid.message + formattedReply : `[↳ Svar fra opretter: ${replyText}]`;
-        const { error: err2 } = await sb
-          .from('bids')
-          .update({ message: newMsg })
-          .eq('id', bidId);
-
-        if (!err2) {
-          targetBid.message = newMsg;
-          return true;
+    if (!success) {
+      try {
+        let targetBid = null;
+        for (const t of state.tasks) {
+          targetBid = t.bids.find(b => String(b.id) === String(bidId));
+          if (targetBid) break;
         }
-      }
-    } catch (e) {}
+
+        if (targetBid) {
+          const formattedReply = `\n\n[↳ Svar fra opretter: ${replyText}]`;
+          const newMsg = targetBid.message ? targetBid.message + formattedReply : `[↳ Svar fra opretter: ${replyText}]`;
+          const { error: err2 } = await sb
+            .from('bids')
+            .update({ message: newMsg })
+            .eq('id', bidId);
+
+          if (!err2) {
+            targetBid.message = newMsg;
+            success = true;
+          }
+        }
+      } catch (e) {}
+    }
   }
 
-  if (taskId && bidderName) {
+  if (!success && taskId && bidderName) {
     try {
       const { error } = await sb
         .from('bids')
@@ -453,8 +489,39 @@ async function saveReplyToBid(bidId, taskId, bidderName, replyText) {
         .eq('task_id', taskId)
         .eq('bidder_name', bidderName);
 
-      if (!error) return true;
+      if (!error) success = true;
     } catch (e) {}
+  }
+
+  // Send e-mail notifikation ved svar på spørgsmål / bud
+  try {
+    const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
+    let ownerEmail = parentTask?.ownerEmail || '';
+    if (!ownerEmail && parentTask?.contact) {
+      const match = parentTask.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
+      if (match) ownerEmail = match[1];
+    }
+
+    if (ownerEmail && ownerEmail.includes('@')) {
+      fetch(sharedEndpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'direct_email',
+          to: ownerEmail,
+          subject: `💬 Nyt svar på spørgsmål/bud vedr. opgaven: "${parentTask?.title || 'Opgave'}"`,
+          body: `Hej ${parentTask?.owner || ''}!\n\nDer er lige blevet indsendt et svar på et spørgsmål / bud vedrørende opgaven "${parentTask?.title || ''}":\n\n↳ Svar: "${replyText}"\n\nSe samtalen og følg op direkte på: https://trojborgappen.dk\n\nVenlig hilsen\nTrøjborg-appen`
+        })
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Kunne ikke sende direkte e-mail notifikation ved svar:', e);
+  }
+
+  // Sæt rød notifikationsprik på app-ikonet (App Badging)
+  if ('setAppBadge' in navigator) {
+    navigator.setAppBadge(1).catch(() => {});
   }
 
   return true;

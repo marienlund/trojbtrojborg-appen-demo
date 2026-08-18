@@ -22,11 +22,41 @@ function doPost(e) {
     return sendNotification(data);
   }
 
+  if (data.type === "direct_email") {
+    return sendDirectEmail(data);
+  }
+
   if (data.type === "task") {
     return saveTaskToSheet(data);
   }
 
   return saveInterest(data);
+}
+
+function sendDirectEmail(data) {
+  const recipient = data.to;
+  if (!recipient || !recipient.includes("@")) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: "Missing or invalid recipient email" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const subject = data.subject || "Ny besked fra Trøjborg-appen";
+  const body = data.body || "Der er ny aktivitet på din opgave på Trøjborg-appen. Se mere på https://trojborgappen.dk";
+
+  try {
+    MailApp.sendEmail({
+      to: recipient,
+      subject: subject,
+      body: body
+    });
+  } catch (err) {
+    Logger.log("Fejl ved afsendelse af direct_email: " + err);
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function saveTaskToSheet(data) {
