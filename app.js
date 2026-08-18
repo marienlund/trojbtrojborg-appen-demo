@@ -409,6 +409,35 @@ async function saveBid(taskId, bid) {
     return null;
   }
 
+  // Send e-mail notifikation til opgaveejeren (fx Karen: kalilarsen@icloud.com)
+  try {
+    const parentTask = state.tasks.find(t => String(t.id) === String(taskId));
+    let ownerEmail = parentTask?.ownerEmail || '';
+    if (!ownerEmail && parentTask?.contact) {
+      const match = parentTask.contact.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/);
+      if (match) ownerEmail = match[1];
+    }
+
+    if (ownerEmail && ownerEmail.includes('@')) {
+      fetch(sharedEndpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          type: 'notification',
+          subscriberEmail: ownerEmail,
+          taskTitle: parentTask?.title || 'Opgave',
+          taskCategory: `💬 Spørgsmål/Bud fra ${bid.name}`,
+          taskArea: parentTask?.area || 'Trøjborg',
+          taskBudget: bid.message || 'Se spørgsmålet i appen',
+          taskOwner: bid.name || 'En nabo'
+        })
+      }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Kunne ikke sende email notifikation til opgaveejer:', e);
+  }
+
   // Sæt rød notifikationsprik på app-ikonet (App Badging)
   if ('setAppBadge' in navigator) {
     navigator.setAppBadge(1).catch(() => {});
