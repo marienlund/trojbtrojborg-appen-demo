@@ -20,48 +20,15 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
           marker = '/* Safari dialog content fix v3 */'
-          if marker in text:
-              raise SystemExit(0)
-
-          css = r'''
-
-/* Safari dialog content fix v3 */
-#authDialog[open],
-#bidDialog[open] {
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-
-#authDialog[open] {
-  height: auto !important;
-  min-height: 460px !important;
-}
-
-#bidDialog[open] {
-  height: auto !important;
-  min-height: 340px !important;
-}
-
-#authDialog[open] .dialog-form,
-#bidDialog[open] .dialog-form {
-  display: grid !important;
-  grid-auto-rows: max-content !important;
-  align-content: start !important;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-'''
-
-          if '</style>' not in text:
-              raise SystemExit('No closing style tag found')
-          text = text.replace('</style>', css + '\n</style>', 1)
-          path.write_text(text, encoding='utf-8')
+          if marker not in text:
+              css = "\n\n/* Safari dialog content fix v3 */\n#authDialog[open],\n#bidDialog[open] {\n  overflow-y: auto !important;\n  -webkit-overflow-scrolling: touch !important;\n}\n\n#authDialog[open] {\n  height: auto !important;\n  min-height: 460px !important;\n}\n\n#bidDialog[open] {\n  height: auto !important;\n  min-height: 340px !important;\n}\n\n#authDialog[open] .dialog-form,\n#bidDialog[open] .dialog-form {\n  display: grid !important;\n  grid-auto-rows: max-content !important;\n  align-content: start !important;\n  height: auto !important;\n  min-height: 0 !important;\n  max-height: none !important;\n  overflow: visible !important;\n}\n"
+              if '</style>' not in text:
+                  raise SystemExit('No closing style tag found')
+              text = text.replace('</style>', css + '\n</style>', 1)
+              path.write_text(text, encoding='utf-8')
           PY
 
       - name: Commit fix and remove temporary workflow
