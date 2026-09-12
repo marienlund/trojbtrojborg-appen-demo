@@ -1,0 +1,74 @@
+name: Fix Safari dialog form height
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-safari-form-height.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-dialogs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch Safari dialog form sizing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          marker = '/* Safari dialog content fix v3 */'
+          if marker in text:
+              raise SystemExit(0)
+
+          css = r'''
+
+/* Safari dialog content fix v3 */
+#authDialog[open],
+#bidDialog[open] {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+#authDialog[open] {
+  height: auto !important;
+  min-height: 460px !important;
+}
+
+#bidDialog[open] {
+  height: auto !important;
+  min-height: 340px !important;
+}
+
+#authDialog[open] .dialog-form,
+#bidDialog[open] .dialog-form {
+  display: grid !important;
+  grid-auto-rows: max-content !important;
+  align-content: start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+'''
+
+          if '</style>' not in text:
+              raise SystemExit('No closing style tag found')
+          text = text.replace('</style>', css + '\n</style>', 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit fix and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/fix-safari-form-height.yml
+          git commit -m "Fix Safari clipping dialog form contents"
+          git push
