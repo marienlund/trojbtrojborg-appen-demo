@@ -16,25 +16,83 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extend mobile dialog fix to iPhone landscape
+      - name: Apply robust iPhone dialog fix
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
+
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-          old = '/* Mobile Safari fix: prevent profile/bid dialogs from collapsing */\n   @media (max-width: 640px) {'
-          new = '/* Mobile Safari fix: prevent profile/bid dialogs from collapsing */\n   @media (max-width: 1024px) {'
-          if old not in text:
-              raise SystemExit('Target mobile dialog rule not found')
-          text = text.replace(old, new, 1)
+
+          text, count = re.subn(
+              r'(/\* Mobile Safari fix: prevent profile/bid dialogs from collapsing \*/\s*)@media\s*\(max-width:\s*640px\)',
+              r'\1@media (max-width: 1024px)',
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not find the existing mobile Safari dialog rule')
+
+          marker = '/* iPhone Safari dialog hardening */'
+          if marker not in text:
+              css = r'''
+
+/* iPhone Safari dialog hardening */
+@media (max-width: 1024px) {
+  #authDialog[open],
+  #bidDialog[open] {
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    transform: none !important;
+    overflow: hidden !important;
+  }
+
+  #authDialog[open] {
+    height: 82vh !important;
+    min-height: 420px !important;
+    max-height: 82vh !important;
+  }
+
+  #bidDialog[open] {
+    height: 70vh !important;
+    min-height: 340px !important;
+    max-height: 70vh !important;
+  }
+
+  #authDialog[open] .dialog-form,
+  #bidDialog[open] .dialog-form {
+    display: grid !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+'''
+              if '</style>' not in text:
+                  raise SystemExit('No closing style tag found')
+              text = text.replace('</style>', css + '\n</style>', 1)
+
           path.write_text(text, encoding='utf-8')
           PY
 
-      - name: Commit fix and remove workflow
+      - name: Commit fix and remove temporary workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           git rm .github/workflows/fix-iphone-landscape.yml
-          git commit -m "Extend dialog fix to iPhone landscape"
+          git commit -m "Harden profile and bid dialogs for iPhone Safari"
           git push
