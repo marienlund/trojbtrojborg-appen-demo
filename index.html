@@ -1224,6 +1224,36 @@ dialog::backdrop {
   }
 }
 
+
+
+/* Safari dialog content fix v3 */
+#authDialog[open],
+#bidDialog[open] {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+#authDialog[open] {
+  height: auto !important;
+  min-height: 460px !important;
+}
+
+#bidDialog[open] {
+  height: auto !important;
+  min-height: 340px !important;
+}
+
+#authDialog[open] .dialog-form,
+#bidDialog[open] .dialog-form {
+  display: grid !important;
+  grid-auto-rows: max-content !important;
+  align-content: start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
 </style>
   </head>
 <body>
