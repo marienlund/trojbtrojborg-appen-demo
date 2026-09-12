@@ -1184,6 +1184,46 @@ dialog::backdrop {
   }
 }
 
+
+/* iPhone Safari hard fix v2 */
+@media (max-width: 1024px) {
+  #authDialog[open],
+  #bidDialog[open] {
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: none !important;
+    overflow: hidden !important;
+  }
+  #authDialog[open] {
+    height: 82vh !important;
+    min-height: 420px !important;
+    max-height: 82vh !important;
+  }
+  #bidDialog[open] {
+    height: 70vh !important;
+    min-height: 340px !important;
+    max-height: 70vh !important;
+  }
+  #authDialog[open] .dialog-form,
+  #bidDialog[open] .dialog-form {
+    display: grid !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
 </style>
   </head>
 <body>
