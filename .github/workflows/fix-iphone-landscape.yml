@@ -1,0 +1,40 @@
+name: Fix iPhone dialog layout
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-iphone-landscape.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix-dialogs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extend mobile dialog fix to iPhone landscape
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          old = '/* Mobile Safari fix: prevent profile/bid dialogs from collapsing */\n   @media (max-width: 640px) {'
+          new = '/* Mobile Safari fix: prevent profile/bid dialogs from collapsing */\n   @media (max-width: 1024px) {'
+          if old not in text:
+              raise SystemExit('Target mobile dialog rule not found')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit fix and remove workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git rm .github/workflows/fix-iphone-landscape.yml
+          git commit -m "Extend dialog fix to iPhone landscape"
+          git push
